@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# Usage: server_setup.sh SUDO_PASSWORD
+# Sets up:
+#   Power monitoring service
+#   GPU drivers
+#   Fans
+#   Undervolting CPU
+#   Permissions to read CPU power usage
+#   nvitop, XRDP
+#   Wake up on WLAN
+
+# Check if password was provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <sudo_password>"
+    exit 1
+fi
+
+PASS="$1"
+
+# Function to run commands as sudo using the provided password
+run_sudo() {
+    echo "$PASS" | sudo -S $1
+}
+
+#Change to root user
+echo "$PASS" | sudo -S su
+
+#Drivers
+# Fans
+# https://github.com/nbfc-linux/nbfc-linux
+# sudo apt install lm-sensors -y
+# sudo systemctl enable nbfc_service --now
+# sudo nbfc start
+
+# Intel undervolting
+# sudo apt install powercap-utils -y
+# sudo powercap-set -p intel-rapl -z 0 -c 0 -l 5000000
+# sudo powercap-set intel-rapl -z 0 -e 1
+# sudo apt install intel-undervolt -y
+# sudo nano /etc/intel-undervolt.conf
+# power package 5/5
+# sudo intel-undervolt apply
+# sudo systemctl enable --now intel-undervolt
+# watch -n 1 "powercap-info -p intel-rapl -z 0"
+
+
+#GTX 1070 Ubuntu
+# sudo apt purge '^nvidia-.*'
+# sudo apt install nvidia-driver-535 -y
+# sudo nvidia-xconfig --cool-bits=28
+# sudo nano /etc/modprobe.d/nvidia-power.conf
+# options nvidia NVreg_EnableGpuFirmware=0
+# sudo update-initramfs -u
+# sudo reboot
+# OR
+# sudo systemctl stop gdm3
+# sudo modprobe -r nvidia_drm
+# sudo modprobe -r nvidia_modeset
+# sudo rmmod nvidia_uvm nvidia_modeset nvidia
+# sudo systemctl start gdm3
+
+
+
+#GTX 3060
+
+#7900 XTX
+
+#MI50
+
+#780M
+
+#IntelHD
+
+#Vulkan
+
+#VNC Server
+# sudo apt update
+# sudo apt install tigervnc-standalone-server tigervnc-common -y
+# mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
+
+echo "Installing/Updating service..."
+    
+# 1. Copy script to home and make it executable
+cp -f "./power_monitor.sh" "$HOME/power_monitor.sh" && chmod +x "$HOME/power_monitor.sh"
+
+# 2. Copy the service to system directory
+cp -f ./power_monitor.service /etc/systemd/system/power_monitor.service
+
+# 3. Use sed to inject the user and absolute path into the service
+sed -i "s|User=.*|User=$(whoami)|" /etc/systemd/system/power_monitor.service
+sed -i "s|ExecStart=.*|ExecStart=$HOME/power_monitor.sh|" /etc/systemd/system/power_monitor.service
+
+# 4. Reload, Enable, and Restart
+systemctl daemon-reload
+systemctl enable power_monitor.service
+systemctl restart power_monitor.service
+echo "Service started..."
+
+# Power utilities installation
+apt update
+apt install sysfsutils ethtool iw xrdp -y
+echo "llmserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl start xrdp" | run_sudo "tee /etc/sudoers.d/xrdp-fix"
+systemctl list-unit-files | grep xrdp
+
+# Set max bit depth to 15 (stable performance low) on the server
+sed -i 's/^max_bpp=.*/max_bpp=15/' /etc/xrdp/xrdp.ini
+
+# Optional: Set the session manager depth too
+sed -i 's/^#*param8=-depth.*/param8=-depth/' /etc/xrdp/sesman.ini
+sed -i 's/^#*param9=24.*/param9=15/' /etc/xrdp/sesman.ini
+
+# Restart to apply
+sudo systemctl restart xrdp
+
+pip install nvitop --break-system-packages
+
+
+# Configure sysfs
+echo "mode class/powercap/intel-rapl:0/energy_uj = 0444" | echo "$PASS" | sudo -S tee -a /etc/sysfs.conf
+chmod 444 /sys/class/powercap/intel-rapl:0/energy_uj
+
+# Create udev rules
+echo "$PASS" | sudo -S tee /etc/udev/rules.d/99-powercap.rules > /dev/null <<EOF
+SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod -R 444 /sys/class/powercap/intel-rapl:0/energy_uj"
+ACTION=="add", SUBSYSTEM=="net", KERNEL=="wl*", RUN+="/usr/bin/iw phy0 wowlan enable magic-packet"
+EOF
+
+# Reload rules and services
+udevadm control --reload-rules
+udevadm trigger --subsystem-match=powercap
+systemctl daemon-reload
+systemctl enable power-monitor.service
+systemctl start power-monitor.service
+
+#Setup Wakeup on WLAN
+WLAN=$(ip -o link show | grep -o 'wl[^:]*' | head -n1)
+PHY_NAME=$(iw dev | grep -o 'phy#[0-9]*' | tr -d '#')
+MACADDR=$(ip link show $WLAN | grep -oP '(?<=link/ether )[:0-9a-fA-F]+')
+
+echo "Server has the Interface $WLAN $PHY_NAME with address $MACADDR"
+
+ethtool -s $WLAN wol g
+iw $PHY_NAME wowlan enable magic-packet
+nmcli connection modify 'Pradhan' wifi.wake-on-wlan magic
+iw $PHY_NAME wowlan show
+echo "If the previous message says WoWLAN is enabled with wake up on magic packet, then system is ready for Wakeup on WLAN"
+
+# Identify the original user (who called the script)
+ORIGINAL_USER=${SUDO_USER:-$USER}
+
+echo "Switching back to $ORIGINAL_USER..."
+
+# Dropping privileges for the final message or subsequent user-level tasks
+sudo -u "$ORIGINAL_USER" bash <<EOF
+    echo "Current user: \$(whoami)"
+    echo "Configuration complete. No longer running as root."
+EOF
