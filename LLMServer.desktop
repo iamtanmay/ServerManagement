@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LLMServer
+Comment=Wake and connect to LLMServer
+# Ensure this repository is cloned at ~/ before running this Desktop shortcut
+Exec=bash -c 'export PASS1=pass1 PASS2=pass2 PASS3=pass3 PASS4=pass4;~/ServerManagement/manage_servers.sh'
+Icon=network-server
+Terminal=true
