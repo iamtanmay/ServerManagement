@@ -14,6 +14,9 @@
 # Load server configuration
 CONFIG_FILE="./servers.conf"
 
+#Get directory of this script
+CURRENT_DIR="$(dirname "$0")"
+
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
 else
@@ -73,7 +76,7 @@ connect_server() {
 	local USER="$4"
 	local PASS="$5"
 	local LOCAL_SCRIPT="$6"
-	local REMOTE_TEMP="./${LOCAL_SCRIPT}"
+	local REMOTE_TEMP="./temp.sh"
 
 #---SSH Connection---
 	if [[ ! -f "$LOCAL_SCRIPT" ]]; then
@@ -142,7 +145,7 @@ while [ "$ACTION" -ne 4 ]; do
 					echo -n "Checking $TITLE ($IP)... "
 					if probe_ssh "$IP" "$PORT"; then
 						if [[ " $ACTION " =~ " 2 " ]]; then
-							connect_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "./server${SELECTION}_startup.sh"
+							connect_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "${CURRENT_DIR}/server${SELECTION}_startup.sh"
 						fi
 						if [[ " $ACTION " =~ " 3 " ]]; then
 							stop_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "$CMDSTOP"
@@ -161,7 +164,7 @@ while [ "$ACTION" -ne 4 ]; do
 								wakeonlan -i 192.168.1.255 "$MAC"
 								SUCCESS=false
 								if probe_ssh "$IP" "$PORT"; then
-									connect_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "./server${SELECTION}_startup.sh"
+									connect_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "${CURRENT_DIR}/server${SELECTION}_startup.sh"
 									SUCCESS=true
 									break
 								fi						

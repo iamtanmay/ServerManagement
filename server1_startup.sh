@@ -1,4 +1,4 @@
 #!/bin/bash
-./PowerMonAndroid.sh
+./ServerManagement/PowerMonAndroid.sh
 bash
 

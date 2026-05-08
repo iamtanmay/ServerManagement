@@ -1,3 +1,3 @@
 #!/bin/bash
-./PowerMonUbuntu.sh
+./ServerManagement/PowerMonUbuntu.sh
 bash
