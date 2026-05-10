@@ -4,13 +4,113 @@ pkg install termux-boot
 mkdir -p ~/.termux/boot
 printf "#!/data/data/com.termux/files/usr/bin/sh\ntermux-wake-lock\nsshd" > ~/.termux/boot/start-ssh.sh
 chmod +x ~/.termux/boot/start-ssh.sh
+pkg install tur-repo -y
+pkg update
+
+#Matter Server + uDocker
+pkg install udocker -y
+mkdir -p /data/data/com.termux/files/home/matter-data
+udocker pull ghcr.io/matter-js/python-matter-server:8.1.2
+udocker create --name=matter-server ghcr.io/matter-js/python-matter-server:8.1.2
+udocker setup --execmode=P1 matter-server
+
+udocker run --user=root -v /data/data/com.termux/files/home/matter-data:/data \
+matter-server \
+--storage-path /data --paa-root-cert-dir /data/credentials --bluetooth-adapter 0
+
+udocker run \
+  --user=root \
+  -v /data/data/com.termux/files/home/matter-data:/data \
+  matter-server \
+  --storage-path /data \
+  --paa-root-cert-dir /data/credentials \
+  --bluetooth-adapter 999 \
+  --disable-server-interactions
+
+udocker run -i -t --user=root --entrypoint=/bin/sh matter-server
+
+cat <<EOF > pair_plug.py
+import sys
+import logging
+from chip import ChipDeviceCtrl
+
+# Disable verbose logging so we can see the output
+logging.getLogger('chip').setLevel(logging.ERROR)
+
+# Initialize the controller
+# The arguments correspond to: opCredsContext, fabricId, nodeId, adminVendorId
+# We use standard defaults (None, 1, 1, 65521)
+try:
+    dc = ChipDeviceCtrl.ChipDeviceController(None, 1, 1, 65521)
+    
+    NODE_ID = 1
+    SETUP_PIN = 2220660
+    IP_ADDRESS = "192.168.1.200"
+
+    print(f"Commissioning device at {IP_ADDRESS}...")
+    dc.CommissionOnNetwork(NODE_ID, SETUP_PIN, IP_ADDRESS)
+    
+    print("Commissioning Successful! Turning device ON...")
+    # Send ON: (nodeid, endpoint, cluster, command)
+    dc.SendCommand(NODE_ID, 1, 6, 1)
+    
+    print("Done. Power is now ON.")
+except Exception as e:
+    print(f"\nFailed: {e}")
+finally:
+    try:
+        dc.Shutdown()
+    except:
+        pass
+EOF
 
 
-#Matter Server
+#Proot
+pkg install proot-distro -y
+proot-distro install ubuntu
+proot-distro login ubuntu
 
+apt update
+apt install -y python3 python3-pip libgcc-s1 libstdc++6 python3-cryptography python3-aiohttp python3-orjson python3-zeroconf python3-grpcio python3-greenlet make python3-setuptools python3-wheel python3-certifi python3-yarl python3-multidict python3-idna python3-attr
+apt install -y build-essential python3-dev rustc cargo libssl-dev pkg-config
+pip3 install maturin --break-system-packages
+pip3 install python-matter-server[server] --break-system-packages
+
+
+
+wget https://github.com/vi/websocat/releases/download/v4.0.0-alpha3/websocat.aarch64-linux-android
+chmod +x websocat*
+mv websocat* $PREFIX/bin/websocat
+websocat --version
 
 #Docker
+pkg update && pkg upgrade
+pkg install openssh git curl wget qemu-utils qemu-common qemu-system-x86_64-headless -y
+mkdir alpine && cd $_
+wget https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/x86_64/alpine-virt-3.23.4-x86_64.iso
+qemu-img create -f qcow2 alpine.img 4G
+qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 \
+  -drive if=pflash,format=raw,read-only,file=$PREFIX/share/qemu/edk2-x86_64-code.fd \
+  -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 \
+  -cdrom alpine-virt-3.23.4-x86_64.iso \
+  -nographic -serial mon:stdio alpine.img
 
+#Login with user root (no password)
+#Press enter for defaults
+setup-interfaces
+wget https://gist.githubusercontent.com/oofnikj/e79aef095cd08756f7f26ed244355d62/raw/answerfile
+sed -i -E 's/(local kernel_opts)=.*/\1="console=ttyS0"/' /sbin/setup-disk
+setup-alpine -f answerfile
+qemu-system-x86_64 -machine q35 -m 1024 -smp cpus=2 -cpu qemu64 \
+  -drive if=pflash,format=raw,read-only,file=$PREFIX/share/qemu/edk2-x86_64-code.fd \
+  -netdev user,id=n1,hostfwd=tcp::2222-:22 -device virtio-net,netdev=n1 \
+  -nographic alpine.img
+
+apk update && apk add docker
+service docker start
+rc-update add docker
+
+export PATH=$PATH:$(pwd)/udocker
 
 #Prom Node Exporter
 pkg install prometheus-node-exporter
@@ -145,4 +245,152 @@ if __name__ == '__main__':
 
 
 #Monitoring
+
+
+#NodeJS matter controller setup
+chmod +x websocat*
+mv websocat* $PREFIX/bin/websocat
+websocat --version
+
+mkdir /data/data/com.termux/files/home/matter && cd /data/data/com.termux/files/home/
+pkg update && pkg upgrade
+pkg install nodejs-lts tmux -y
+npm i @matter/nodejs-shell
+
+#Give permissions to Termux to discover Network
+#Install ADB on PC. Your phone should be connected via USB and have Developer settings -> USB Debugging set to allow
+#sudo apt update && sudo apt install android-tools-adb android-tools-fastboot -y && adb devices
+#Your phone will show a popup, click allow. Run the command again
+#adb devices
+#adb -s ZY22GVS867 shell "pm grant com.termux android.permission.ACCESS_FINE_LOCATION; device_config put activity_manager max_phantom_processes 2147483647"
+#Sanity test if Termux can discover the network
+pkg install mdns-scan
+mdns-scan
+
+alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
+matter
+
+#Your router should be set up to give this device a static IP address
+#On Desktop start the matter server which is already paired with the matter device
+#Send this commission window request and copy the 8 digit PIN from the docker logs
+#echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
+#echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node_id": 9}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#Sanity check - shows devices which are in commission window
+discover commissionable
+#Get the -D value, the discriminator and use the PIN from the docker logs
+commission pair 3 --setupPinCode 66163303 --discriminator 3307
+config logfile set /data/data/com.termux/files/home/matter/matter_events.log
+
+#Restart the shell with tmux for detached persistent logging
+exit
+
+tmux
+matter
+config loglevel set "info"
+nodes log 3
+
+#Ctrl + B, then tap D to detach
+
+#Log management
+#Log
+cat ~/matter/matter_events.log | grep INFO
+#Tail
+tail -f -n 10 ~/matter/matter_events.log | grep --line-buffered INFO
+#Clearing logs
+truncate -s 0 ~/matter/matter_events.log
+
+#Commands
+#Format is 'commands onoff on <NodeId> 1'
+commands onoff off 3 1
+##To DELETE all configuration from the Matter controller - rm -rf /data/data/com.termux/files/home/.matter/shell-0
+
+#Scripting command to turn the plug on/off
+alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
+{ echo "commands onoff on 3 1"; sleep 15; } | matter
+{ echo "commands onoff off 3 1"; sleep 15; } | matter
+
+#Wake up server via bluetooth
+lsusb | grep Bluetooth
+Bus 001 Device 004: ID 8087:0a2b Intel Corp. Bluetooth wireless interface
+
+#To enable Wake on Bluetooth on your ASUS ROG GL702VS running Ubuntu 24.04, you must manually "arm" the specific USB port that controls your Intel Bluetooth adapter #(8087:0a2b).Your lsusb output shows the Bluetooth card is on Bus 001 Device 004. Since your grep result for 1-6 is the moto g23, your Bluetooth module is likely on #another 1-x port (often 1-7 or 1-9).
+
+# Finds the sysfs path for the Intel Bluetooth module
+for dev in /sys/bus/usb/devices/1-*; do
+  if [ -f "$dev/idVendor" ] && [ "$(cat $dev/idVendor)" = "8087" ] && [ "$(cat $dev/idProduct)" = "0a2b" ]; then
+    echo "Found Bluetooth at: $dev"
+    echo "enabled" | sudo tee "$dev/power/wakeup"
+  fi
+done
+
+#Found Bluetooth at: /sys/bus/usb/devices/1-9
+#enabled
+#Change sleep modes
+#sudo nano /etc/default/grub
+#GRUB_CMDLINE_LINUX_DEFAULT="quiet splash nomodeset mem_sleep_default=deep
+#sudo grub-update
+#echo deep | sudo tee /sys/power/mem_sleep
+#echo s2idle | sudo tee /sys/power/mem_sleep
+#sudo reboot now
+
+
+echo 'ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0a2b", ATTR{power/wakeup}="enabled"' | sudo tee /etc/udev/rules.d/90-moto-wake.rules && sudo udevadm control --reload-rules && sudo udevadm trigger
+
+
+pkg install android-tools -y
+#Enable Wireless Debugging in Developer Options. Click it to get pairing code and IP/Port. Different port for Pairing/Connecting
+#In Termux, pair the phone to itself
+#The pairing port and connecting port are DIFFERENT !
+adb pair 192.168.1.101:34503 089109
+adb connect 192.168.1.101:43289
+
+adb shell svc bluetooth disable
+sleep 2
+adb shell svc bluetooth enable
+
+
+
+#Wake Up server via USB
+#On the Server
+echo 'ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="22b8", ATTR{idProduct}=="2e81", ATTR{power/wakeup}="enabled"' | sudo tee /etc/udev/rules.d/90-moto-wake.rules && sudo udevadm control --reload-rules && sudo udevadm trigger
+# Enable wake for the specific port
+grep -H . /sys/bus/usb/devices/*/product | grep "moto g23"
+echo "enabled" | sudo tee /sys/bus/usb/devices/1-6/power/wakeup
+# Enable wake for the parent hub (Bus 1)
+echo "enabled" | sudo tee /sys/bus/usb/devices/usb1/power/wakeup
+
+#Check if the device is enabled for S3 - Deep Sleep
+cat /proc/acpi/wakeup | grep "XHC"
+
+pkg install android-tools -y
+#Enable Wireless Debugging in Developer Options. Click it to get pairing code and IP/Port. Different port for Pairing/Connecting
+#In Termux, pair the phone to itself
+#The pairing port and connecting port are DIFFERENT !
+adb pair 192.168.1.101:34503 089109
+adb connect 192.168.1.101:43289
+
+nano wake-laptop.sh
+#!/bin/bash
+# Connect to phone's internal ADB
+adb connect [IP:PORT]
+
+# Force a USB 'Personality Change' to wake the laptop
+echo "Sending wake signal..."
+adb shell svc usb setFunctions rndis
+sleep 1
+adb shell svc usb setFunctions mtp
+echo "Signal sent!"
+
+chmod +x wake-laptop.sh
+
+
+#Send Enter keypress to wake up the machine
+adb shell hid keyboard press enter
+#Send Spacebar keypress to wake up the machine
+adb shell input keyevent 62
+
+#Turn USB tethering on to wake up the machine
+adb shell svc usb setFunctions rndis
+adb shell svc usb setFunctions rndis && adb shell svc usb setFunctions mtp
+
 
