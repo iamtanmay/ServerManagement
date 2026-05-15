@@ -34,17 +34,17 @@ sudo chmod a+x /usr/local/bin/websocat
 websocat --version
 #Run the matter-server docker container with bluetooth access
 #Sends the WiFi credentials to your server
-echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
+#echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
 #Bluetooth Pairs and commissions the device
-echo '{"message_id": "3", "command": "commission_with_code", "args": {"code": "10419441567"}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#echo '{"message_id": "3", "command": "commission_with_code", "args": {"code": "10419441567"}}' | websocat --exit-on-eof ws://localhost:5580/ws
 
 #OFF
-echo '{"message_id": "6", "command": "device_command", "args": {"node_id": 9, "endpoint_id": 1, "cluster_id": 6, "command_name": "Off", "payload": {}}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#echo '{"message_id": "6", "command": "device_command", "args": {"node_id": 9, "endpoint_id": 1, "cluster_id": 6, "command_name": "Off", "payload": {}}}' | websocat --exit-on-eof ws://localhost:5580/ws
 #ON
-echo '{"message_id": "5", "command": "device_command", "args": {"node_id": 9, "endpoint_id": 1, "cluster_id": 6, "command_name": "On", "payload": {}}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#echo '{"message_id": "5", "command": "device_command", "args": {"node_id": 9, "endpoint_id": 1, "cluster_id": 6, "command_name": "On", "payload": {}}}' | websocat --exit-on-eof ws://localhost:5580/ws
 
 #Commission Window
-echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node_id": 9}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node_id": 9}}' | websocat --exit-on-eof ws://localhost:5580/ws
 
 # Fans
 # https://github.com/nbfc-linux/nbfc-linux
@@ -93,12 +93,14 @@ echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node
 
 #Vulkan
 
-#VNC Server
-# sudo apt update
-# sudo apt install tigervnc-standalone-server tigervnc-common -y
-# mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
+#SSH and VNC Server
+sudo apt update
+sudo apt install openssh-server tigervnc-standalone-server tigervnc-common -y
+mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
+sudo ufw allow ssh
+sudo systemctl enable --now ssh.socket
+sudo systemctl status ssh.socket
 
-echo "Installing/Updating service..."
     
 # 1. Copy script to home and make it executable
 cp -f "./power_monitor.sh" "$HOME/power_monitor.sh" && chmod +x "$HOME/power_monitor.sh"
