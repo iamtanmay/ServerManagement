@@ -77,8 +77,8 @@ connect_server() {
 	local PASS="$5"
 	local LOCAL_SCRIPT="$6"
 
-connect_server_ssh "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "$LOCAL_SCRIPT"
-connect_server_vnc "$TITLE" "$IP" "$PORT" "$USER" "$PASS"
+	connect_server_ssh "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "$LOCAL_SCRIPT"
+	connect_server_vnc "$TITLE" "$IP" "$PORT" "$USER" "$PASS"
 }
 
 connect_server_ssh() {
@@ -102,6 +102,17 @@ connect_server_ssh() {
 	# Launch SSH terminal
 	gnome-terminal --tab --title="$TITLE" -- bash -c \
 	"sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"chmod +x $REMOTE_TEMP; $REMOTE_TEMP; rm -f $REMOTE_TEMP; bash\""
+}
+
+send_ssh_command()
+{
+	local IP="$1"
+	local PORT="$2"
+	local USER="$3"
+	local PASS="$4"
+	local COMMAND="$5"
+
+	sshpass -p "$PASS" ssh -t $SSH_OPTS $USER@$IP -p $PORT "$COMMAND"
 }
 
 connect_server_vnc() {
@@ -133,6 +144,16 @@ connect_server_vnc() {
 	fi
 }
 
+switch_smart_plug() {
+	local switch="$1"
+	if [[ "$switch" == "on" ]]; then
+		./switch_matter_smartplug 1
+	fi
+	if [[ "$switch" == "off" ]]; then
+		./switch_matter_smartplug 0
+	fi
+}
+
 # Main loop
 ACTION=0
 while [ "$ACTION" -ne 6 ]; do
@@ -148,10 +169,14 @@ while [ "$ACTION" -ne 6 ]; do
 	echo "  3) New SSH connection"
 	echo "  4) New VNC connection"
 	echo "  5) Stop server"
-	echo "  6) Exit"
+	echo "  6) Restart Smart plug"
+	echo "  7) Smart plug On"
+	echo "  8) Smart plug Off"
+	echo "  9) Exit"
+
 	read -p "> " -t 15 ACTION || ACTION=1
 
-	if [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 6" ]]; then
+	if [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 9" ]]; then
 		# --- SELECTION MENU ---
 		echo "Enter servers separated by space (e.g., 1 2 4) or 'all' or 'back':"
 		read -p "> " SELECTION
@@ -183,10 +208,6 @@ while [ "$ACTION" -ne 6 ]; do
 					else
 						if [[ " $ACTION " =~ " 2 " ]]; then
 							echo "OFFLINE -> Starting"
-
-							#MATTER smartplug cycle
-
-
 
 							#Wake on WLAN
 							for i in {1..100}; do
