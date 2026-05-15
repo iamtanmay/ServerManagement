@@ -96,31 +96,14 @@ mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
 echo -e "$PASS\n$PASS" | vncpasswd -f > ~/.vnc/passwd
 chmod 600 ~/.vnc/passwd
 
-# Create a systemd service for TigerVNC (Display :1, Port 5901)
-sudo tee /etc/systemd/system/vncserver@.service > /dev/null <<EOF
-[Unit]
-Description=Start TigerVNC server at startup
-After=syslog.target network.target
+crontab -l 2>/dev/null | grep -v "vncserver :1" | crontab -
 
-[Service]
-Type=forking
-User=$USER
-Group=$USER
-WorkingDirectory=/home/$USER
+# Add a cron job to start the server at boot exactly how your connection script expects it
+(crontab -l 2>/dev/null; echo "@reboot rm -f /tmp/.X1-lock /tmp/.X11-unix/X1 ~/.vnc/*.pid ~/.vnc/*.log && /usr/bin/vncserver :1 -geometry 1280x720 -localhost no -xstartup /etc/X11/Xsession") | crontab -
 
-PIDFile=/home/$USER/.vnc/%H:%i.pid
-ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
-ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24
-ExecStop=/usr/bin/vncserver -kill :%i
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Reload systemd, enable, and start the VNC service on display :1
-sudo systemctl daemon-reload
-sudo systemctl enable vncserver@1.service
-sudo systemctl start vncserver@1.service
+# Run the server command immediately for the current uptime session
+rm -f /tmp/.X1-lock /tmp/.X11-unix/X1 ~/.vnc/*.pid ~/.vnc/*.log
+vncserver :1 -geometry 1280x720 -localhost no -xstartup /etc/X11/Xsession
 
 sudo ufw allow ssh
 sudo systemctl enable --now ssh.socket
