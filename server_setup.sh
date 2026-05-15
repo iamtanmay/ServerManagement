@@ -18,13 +18,8 @@ fi
 
 PASS="$1"
 
-# Function to run commands as sudo using the provided password
-run_sudo() {
-    echo "$PASS" | sudo -S $1
-}
-
 #Change to root user
-echo "$PASS" | sudo -S su
+echo "$PASS" | sudo -S -s
 
 #Drivers
 #Factory reset the plug with 10 second long press
@@ -32,6 +27,7 @@ echo "$PASS" | sudo -S su
 sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl
 sudo chmod a+x /usr/local/bin/websocat
 websocat --version
+
 #Run the matter-server docker container with bluetooth access
 #Sends the WiFi credentials to your server
 #echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
@@ -103,7 +99,7 @@ sudo systemctl status ssh.socket
 
     
 # 1. Copy script to home and make it executable
-cp -f "./power_monitor.sh" "$HOME/power_monitor.sh" && chmod +x "$HOME/power_monitor.sh"
+cp -f "./PowerMonUbuntu.sh" "$HOME/power_monitor.sh" && chmod +x "$HOME/power_monitor.sh"
 
 # 2. Copy the service to system directory
 cp -f ./power_monitor.service /etc/systemd/system/power_monitor.service
@@ -116,23 +112,6 @@ sed -i "s|ExecStart=.*|ExecStart=$HOME/power_monitor.sh|" /etc/systemd/system/po
 systemctl daemon-reload
 systemctl enable power_monitor.service
 systemctl restart power_monitor.service
-echo "Service started..."
-
-# Power utilities installation
-apt update
-apt install sysfsutils ethtool iw xrdp -y
-echo "llmserver ALL=(ALL) NOPASSWD: /usr/bin/systemctl start xrdp" | run_sudo "tee /etc/sudoers.d/xrdp-fix"
-systemctl list-unit-files | grep xrdp
-
-# Set max bit depth to 15 (stable performance low) on the server
-sed -i 's/^max_bpp=.*/max_bpp=15/' /etc/xrdp/xrdp.ini
-
-# Optional: Set the session manager depth too
-sed -i 's/^#*param8=-depth.*/param8=-depth/' /etc/xrdp/sesman.ini
-sed -i 's/^#*param9=24.*/param9=15/' /etc/xrdp/sesman.ini
-
-# Restart to apply
-sudo systemctl restart xrdp
 
 pip install nvitop --break-system-packages
 
