@@ -93,6 +93,35 @@ websocat --version
 sudo apt update
 sudo apt install openssh-server tigervnc-standalone-server tigervnc-common -y
 mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
+echo -e "$PASS\n$PASS" | vncpasswd -f > ~/.vnc/passwd
+chmod 600 ~/.vnc/passwd
+
+# Create a systemd service for TigerVNC (Display :1, Port 5901)
+sudo tee /etc/systemd/system/vncserver@.service > /dev/null <<EOF
+[Unit]
+Description=Start TigerVNC server at startup
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=$USER
+Group=$USER
+WorkingDirectory=/home/$USER
+
+PIDFile=/home/$USER/.vnc/%H:%i.pid
+ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+ExecStart=/usr/bin/vncserver :%i -geometry 1920x1080 -depth 24
+ExecStop=/usr/bin/vncserver -kill :%i
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload systemd, enable, and start the VNC service on display :1
+sudo systemctl daemon-reload
+sudo systemctl enable vncserver@1.service
+sudo systemctl start vncserver@1.service
+
 sudo ufw allow ssh
 sudo systemctl enable --now ssh.socket
     
