@@ -27,6 +27,25 @@ run_sudo() {
 echo "$PASS" | sudo -S su
 
 #Drivers
+#Factory reset the plug with 10 second long press
+#Install websocat on your system
+sudo wget -qO /usr/local/bin/websocat https://github.com/vi/websocat/releases/latest/download/websocat.x86_64-unknown-linux-musl
+sudo chmod a+x /usr/local/bin/websocat
+websocat --version
+#Run the matter-server docker container with bluetooth access
+#Sends the WiFi credentials to your server
+echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
+#Bluetooth Pairs and commissions the device
+echo '{"message_id": "3", "command": "commission_with_code", "args": {"code": "10419441567"}}' | websocat --exit-on-eof ws://localhost:5580/ws
+
+#OFF
+echo '{"message_id": "6", "command": "device_command", "args": {"node_id": 9, "endpoint_id": 1, "cluster_id": 6, "command_name": "Off", "payload": {}}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#ON
+echo '{"message_id": "5", "command": "device_command", "args": {"node_id": 9, "endpoint_id": 1, "cluster_id": 6, "command_name": "On", "payload": {}}}' | websocat --exit-on-eof ws://localhost:5580/ws
+
+#Commission Window
+echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node_id": 9}}' | websocat --exit-on-eof ws://localhost:5580/ws
+
 # Fans
 # https://github.com/nbfc-linux/nbfc-linux
 # sudo apt install lm-sensors -y

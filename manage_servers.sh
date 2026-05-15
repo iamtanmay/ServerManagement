@@ -76,9 +76,20 @@ connect_server() {
 	local USER="$4"
 	local PASS="$5"
 	local LOCAL_SCRIPT="$6"
+
+connect_server_ssh "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "$LOCAL_SCRIPT"
+connect_server_vnc "$TITLE" "$IP" "$PORT" "$USER" "$PASS"
+}
+
+connect_server_ssh() {
+	local TITLE="$1"
+	local IP="$2"
+	local PORT="$3"
+	local USER="$4"
+	local PASS="$5"
+	local LOCAL_SCRIPT="$6"
 	local REMOTE_TEMP="./temp.sh"
 
-#---SSH Connection---
 	if [[ ! -f "$LOCAL_SCRIPT" ]]; then
 		echo "Error: $LOCAL_SCRIPT not found."
 		sleep 2
@@ -91,8 +102,15 @@ connect_server() {
 	# Launch SSH terminal
 	gnome-terminal --tab --title="$TITLE" -- bash -c \
 	"sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"chmod +x $REMOTE_TEMP; $REMOTE_TEMP; rm -f $REMOTE_TEMP; bash\""
+}
 
-#---VNC Connection---
+connect_server_vnc() {
+	local TITLE="$1"
+	local IP="$2"
+	local PORT="$3"
+	local USER="$4"
+	local PASS="$5"
+
 	if [[ "$TITLE" == "Android Server" ]]; then
 		# Kill stale VNC servers and restart
 		sshpass -p "$PASS" ssh $SSH_OPTS "$USER@$IP" -p "$PORT" "vncserver -kill :1; vncserver :1"
@@ -117,7 +135,7 @@ connect_server() {
 
 # Main loop
 ACTION=0
-while [ "$ACTION" -ne 4 ]; do
+while [ "$ACTION" -ne 6 ]; do
 	clear
 	get_status "${SERVERS[@]}"
 
@@ -127,11 +145,13 @@ while [ "$ACTION" -ne 4 ]; do
 	echo "  ---------------- "
 	echo "  1) Refresh status"
 	echo "  2) Start server"
-	echo "  3) Stop server"
-	echo "  4) Exit"
+	echo "  3) New SSH connection"
+	echo "  4) New VNC connection"
+	echo "  5) Stop server"
+	echo "  6) Exit"
 	read -p "> " -t 15 ACTION || ACTION=1
 
-	if [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 4 " ]]; then
+	if [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 6" ]]; then
 		# --- SELECTION MENU ---
 		echo "Enter servers separated by space (e.g., 1 2 4) or 'all' or 'back':"
 		read -p "> " SELECTION
@@ -144,10 +164,20 @@ while [ "$ACTION" -ne 4 ]; do
 				if [[ " $SELECTION " =~ " $ID " ]] || [[ "$SELECTION" == "all" ]]; then        
 					echo -n "Checking $TITLE ($IP)... "
 					if probe_ssh "$IP" "$PORT"; then
+						# START
 						if [[ " $ACTION " =~ " 2 " ]]; then
 							connect_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "${CURRENT_DIR}/server${SELECTION}_startup.sh"
 						fi
+						# SSH ONLY
 						if [[ " $ACTION " =~ " 3 " ]]; then
+							connect_server_ssh "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "${CURRENT_DIR}/server${SELECTION}_startup.sh"
+						fi
+						# VNC ONLY
+						if [[ " $ACTION " =~ " 4 " ]]; then
+							connect_server_vnc "$TITLE" "$IP" "$PORT" "$USER" "$PASS"
+						fi
+						# STOP
+						if [[ " $ACTION " =~ " 5 " ]]; then
 							stop_server "$TITLE" "$IP" "$PORT" "$USER" "$PASS" "$CMDSTOP"
 						fi
 					else
