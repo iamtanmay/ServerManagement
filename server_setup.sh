@@ -95,14 +95,12 @@ sudo apt install openssh-server tigervnc-standalone-server tigervnc-common -y
 mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
 sudo ufw allow ssh
 sudo systemctl enable --now ssh.socket
-sudo systemctl status ssh.socket
-
     
 # 1. Copy script to home and make it executable
 cp -f "./PowerMonUbuntu.sh" "$HOME/power_monitor.sh" && chmod +x "$HOME/power_monitor.sh"
 
-# 2. Copy the service to system directory
-cp -f ./power_monitor.service /etc/systemd/system/power_monitor.service
+# 2. Create the service in system directory
+touch /etc/systemd/system/power_monitor.service
 
 # 3. Use sed to inject the user and absolute path into the service
 sed -i "s|User=.*|User=$(whoami)|" /etc/systemd/system/power_monitor.service
