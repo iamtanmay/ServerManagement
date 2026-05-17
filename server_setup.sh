@@ -80,6 +80,11 @@ websocat --version
 #GTX 3060
 
 #7900 XTX
+sudo add-apt-repository -y -s deb http://security.ubuntu.com/ubuntu jammy main universe
+sudo apt update
+sudo apt install rocm-smi-lib -y
+/opt/rocm/bin/rocm-smi --showpower
+
 
 #MI50
 
@@ -88,9 +93,10 @@ websocat --version
 #IntelHD
 
 #Vulkan
+sudo apt update
+sudo apt install vulkan-tools libvulkan-dev -y
 
 #SSH and VNC Server
-sudo apt update
 sudo apt install openssh-server tigervnc-standalone-server tigervnc-common -y
 mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
 echo -e "$PASS\n$PASS" | vncpasswd -f > ~/.vnc/passwd
