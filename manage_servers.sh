@@ -101,7 +101,7 @@ connect_server_ssh() {
 
 	# Launch SSH terminal
 	gnome-terminal --tab --title="$TITLE" -- bash -c \
-	"sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"chmod +x $REMOTE_TEMP; $REMOTE_TEMP; rm -f $REMOTE_TEMP; bash\""
+	"sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"chmod +x $REMOTE_TEMP; $REMOTE_TEMP $PASS; rm -f $REMOTE_TEMP; bash\""
 }
 
 send_ssh_command()

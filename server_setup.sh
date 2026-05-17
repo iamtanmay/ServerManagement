@@ -65,8 +65,15 @@ websocat --version
 # sudo systemctl enable nbfc_service --now
 # sudo nbfc start
 
-# Intel undervolting
-# sudo apt install powercap-utils -y
+# Intel
+sudo apt install powercap-utils -y
+sudo tee /etc/udev/rules.d/99-powercap.rules > /dev/null << 'EOF'
+SUBSYSTEM=="powercap", ACTION=="add", RUN+="/bin/chmod -R a+r /sys/class/powercap/intel-rapl"
+EOF
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
 # sudo powercap-set -p intel-rapl -z 0 -c 0 -l 5000000
 # sudo powercap-set intel-rapl -z 0 -e 1
 # sudo apt install intel-undervolt -y
