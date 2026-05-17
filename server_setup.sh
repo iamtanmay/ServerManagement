@@ -18,6 +18,23 @@ fi
 
 PASS="$1"
 
+#Utilities
+sudo apt upgrade
+sudo apt install net-tools -y
+
+#Github setup
+sudo apt install sshpass keychain -y
+
+cat << 'EOF' >> ~/.bashrc
+if [ -z "$SSH_AUTH_SOCK" ]; then
+  eval "$(ssh-agent -s)"
+fi
+
+source $HOME/.keychain/$HOSTNAME-sh
+eval `keychain --eval --agents ssh githubSSH.PEM`
+EOF
+source ~/.bashrc
+
 #Change to root user
 echo "$PASS" | sudo -S -s
 
