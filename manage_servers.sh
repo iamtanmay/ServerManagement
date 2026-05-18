@@ -146,11 +146,14 @@ connect_server_vnc() {
 
 switch_smart_plug() {
 	local switch="$1"
+	local script_dir
+	script_dir=$(dirname "$0")
+
 	if [[ "$switch" == "on" ]]; then
-		./switch_matter_smartplug 1
+		$script_dir/switch_matter_smartplug.sh 1
 	fi
 	if [[ "$switch" == "off" ]]; then
-		./switch_matter_smartplug 0
+		$script_dir/switch_matter_smartplug.sh 0
 	fi
 }
 
@@ -176,7 +179,14 @@ while [ "$ACTION" -ne 6 ]; do
 
 	read -p "> " -t 15 ACTION || ACTION=1
 
-	if [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 9" ]]; then
+	if [[ " $ACTION " == " 6 " ]]; then
+		switch_smart_plug "off"
+		switch_smart_plug "on"
+	elif [[ " $ACTION " == " 7 " ]]; then
+		switch_smart_plug "on"
+	elif [[ " $ACTION " == " 8 " ]]; then
+		switch_smart_plug "off"
+	elif [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 9" ]]; then
 		# --- SELECTION MENU ---
 		echo "Enter servers separated by space (e.g., 1 2 4) or 'all' or 'back':"
 		read -p "> " SELECTION
