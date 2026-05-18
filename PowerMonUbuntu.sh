@@ -48,10 +48,10 @@ while true; do
 
 	#AMD
 	amd_pwr=0
-	echo "DEBUG 3"
+	echo "DEBUG 31"
 	if command -v rocm-smi &> /dev/null; then
-		amd_data=$(rocm-smi --showpower --csv 2>/dev/null | grep -v "device" | grep -v "Device")
 		echo "DEBUG 4"
+		amd_data=$(rocm-smi --showpower --csv 2>/dev/null | grep -v "device" | grep -v "Device")
 		if [ ! -z "$amd_data" ]; then
 			while read -r line; do
 				idx=$(echo "$line" | cut -d',' -f1 | xargs)
