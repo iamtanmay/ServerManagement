@@ -16,6 +16,8 @@ CONFIG_FILE="./servers.conf"
 
 #Get directory of this script
 CURRENT_DIR="$(dirname "$0")"
+SMART_PLUG_STATUS=""
+SMART_PLUG_STATUS=$(switch_smart_plug "status")
 
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
@@ -51,7 +53,7 @@ get_status() {
 			echo "  [$ID] $TITLE [$IP] - OFFLINE"
 		fi
 	done
-	switch_smart_plug "status"
+	echo "  $SMART_PLUG_STATUS"
 }
 
 # Suspend or PowerOff a server
@@ -183,14 +185,16 @@ while [ "$ACTION" -ne 9 ]; do
 
 	read -p "> " -t 15 ACTION || ACTION=1
 
-	if [[ " $ACTION " == " 6 " ]]; then
+	if [[ " $ACTION " == " 1 " ]]; then
+		SMART_PLUG_STATUS=$(switch_smart_plug "status")
+	elif [[ " $ACTION " == " 6 " ]]; then
 		switch_smart_plug "off"
 		switch_smart_plug "on"
 	elif [[ " $ACTION " == " 7 " ]]; then
 		switch_smart_plug "on"
 	elif [[ " $ACTION " == " 8 " ]]; then
 		switch_smart_plug "off"
-	elif [[ " $ACTION " != " 1 " ]] && [[ " $ACTION " != " 9" ]]; then
+	elif [[ " $ACTION " != " 9" ]]; then
 		# --- SELECTION MENU ---
 		echo "Enter servers separated by space (e.g., 1 2 4) or 'all' or 'back':"
 		read -p "> " SELECTION

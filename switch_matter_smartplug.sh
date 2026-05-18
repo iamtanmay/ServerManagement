@@ -5,7 +5,7 @@ matter() {
 }
 
 if [[ " $1 " == " -1 " ]]; then
-    { echo "nodes status 3"; sleep 5; } | matter | grep "status"
+    { echo "nodes status 3"; sleep 20; } | matter | grep "status"
 fi
 
 if [[ " $1 " == " 0 " ]]; then
