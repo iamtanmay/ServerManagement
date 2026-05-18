@@ -47,7 +47,7 @@ while true; do
 	#AMD
 	amd_pwr=0
 	if command -v /opt/rocm/bin/rocm-smi &> /dev/null; then
-		amd_data=$(rocm-smi --showpower --csv 2>/dev/null | grep -v "device" | grep -v "Device")
+		amd_data=$(/opt/rocm/bin/rocm-smi --showpower --csv 2>/dev/null | grep -v "device" | grep -v "Device")
 
 		if [ ! -z "$amd_data" ]; then
 			while read -r line; do
