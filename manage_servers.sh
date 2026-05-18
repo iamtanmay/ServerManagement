@@ -40,17 +40,18 @@ probe_ssh(){
 
 # Refreshes the Online/Offline status of all servers in servers.conf
 get_status() {
-    for s in "${SERVERS[@]}"; do
-        # Read the values FIRST
-        IFS="|" read -r ID TITLE IP PORT USER PASS CMDSTOP MAC <<< "$s"
-        
-        # Now check the status
-	if probe_ssh "$IP" "$PORT"; then
-            echo "  [$ID] $TITLE [$IP] - ONLINE"
-        else
-            echo "  [$ID] $TITLE [$IP] - OFFLINE"
-        fi
-    done
+	for s in "${SERVERS[@]}"; do
+		# Read the values FIRST
+		IFS="|" read -r ID TITLE IP PORT USER PASS CMDSTOP MAC <<< "$s"
+
+		# Now check the status
+		if probe_ssh "$IP" "$PORT"; then
+			echo "  [$ID] $TITLE [$IP] - ONLINE"
+		else
+			echo "  [$ID] $TITLE [$IP] - OFFLINE"
+		fi
+	done
+	switch_smart_plug "status"
 }
 
 # Suspend or PowerOff a server
@@ -155,11 +156,14 @@ switch_smart_plug() {
 	if [[ "$switch" == "off" ]]; then
 		$script_dir/switch_matter_smartplug.sh 0
 	fi
+	if [[ "$switch" == "status" ]]; then
+		$script_dir/switch_matter_smartplug.sh -1
+	fi
 }
 
 # Main loop
 ACTION=0
-while [ "$ACTION" -ne 6 ]; do
+while [ "$ACTION" -ne 9 ]; do
 	clear
 	get_status "${SERVERS[@]}"
 
