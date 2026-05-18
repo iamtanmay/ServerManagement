@@ -33,7 +33,7 @@ while true; do
 	amd_pwr=0
 	if command -v rocm-smi &> /dev/null; then
 		amd_data=$(rocm-smi --showpower --csv 2>/dev/null | grep -v "device" | grep -v "Device")
-
+		echo "Debug"
 		if [ ! -z "$amd_data" ]; then
 			while read -r line; do
 				idx=$(echo "$line" | cut -d',' -f1 | xargs)

@@ -108,7 +108,7 @@ sudo add-apt-repository -y -s deb http://security.ubuntu.com/ubuntu jammy main u
 sudo apt update
 sudo apt install rocm-smi-lib -y
 /opt/rocm/bin/rocm-smi --showpower
-
+grep -qF '/opt/rocm/bin' ~/.bashrc || echo 'export PATH="$PATH:/opt/rocm/bin:/opt/rocm/hyperfine/bin"' >> ~/.bashrc && source ~/.bashrc
 
 #MI50
 
