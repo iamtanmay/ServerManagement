@@ -11,8 +11,10 @@ while true; do
 	#Rest Package estimate
 	rest_pwr=10
 
+
 	#INTEL
 	intel_pwr=0
+	echo "DEBUG 1"
 	if [ -d /sys/class/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:0 ]; then
 		e1=$(cat /sys/class/powercap/intel-rapl/intel-rapl:0/intel-rapl:0:0/energy_uj)
 		sleep 0.2
@@ -26,6 +28,7 @@ while true; do
 
 	#NVIDIA
 	nvidia_pwr=0
+	echo "DEBUG 2"
 	if command -v nvidia-smi &> /dev/null; then
 		nv_data=$(nvidia-smi --query-gpu=index,name,power.draw --format=csv,noheader,nounits 2>/dev/null)
 
@@ -45,9 +48,10 @@ while true; do
 
 	#AMD
 	amd_pwr=0
+	echo "DEBUG 3"
 	if command -v rocm-smi &> /dev/null; then
 		amd_data=$(rocm-smi --showpower --csv 2>/dev/null | grep -v "device" | grep -v "Device")
-
+		echo "DEBUG 4"
 		if [ ! -z "$amd_data" ]; then
 			while read -r line; do
 				idx=$(echo "$line" | cut -d',' -f1 | xargs)
