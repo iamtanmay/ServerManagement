@@ -9,7 +9,11 @@ while true; do
 	total_power=0
 
 	#Rest Package estimate
-	rest_pwr=10
+	rest_pwr=0
+	rest_pwr=$2
+	if [ -z "$1" ]; then
+		rest_pwr=0
+	fi
 
 
 	#INTEL

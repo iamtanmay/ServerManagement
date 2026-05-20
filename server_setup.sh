@@ -22,8 +22,14 @@ PASS="$1"
 sudo apt upgrade
 sudo apt install net-tools -y
 
+#File server
+sudo apt install vsftpd -y
+sudo sed -i 's/#\?write_enable=YES/write_enable=YES/' /etc/vsftpd.conf
+sudo systemctl restart vsftpd
+
 #Github setup
 sudo apt install sshpass keychain -y
+sudo chmod 600 /home/llmserver/.ssh/githubSSH.PEM
 
 cat << 'EOF' >> ~/.bashrc
 if [ -z "$SSH_AUTH_SOCK" ]; then
