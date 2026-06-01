@@ -11,7 +11,7 @@ convert_time_format() {
         d=int(s/86400); s%=86400; 
         h=int(s/3600); s%=3600; 
         m=int(s/60); s%=60; 
-        print "pid " $4 " - UP since " d " days, " h " hours, " m " minutes, " s " seconds"
+        print "pid " $4 " - UP  " d "days, " h "h, " m "m, " s "s"
     }'
 }
 
