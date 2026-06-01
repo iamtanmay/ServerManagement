@@ -1,0 +1,23 @@
+# $HOME/homepage/config/services.yaml
+- LLM Cluster:
+    - LLM Server Small:
+        icon: cpu
+        href: http://192.168.1.52:5000
+        ping: 192.168.1.14
+
+    - LLM Server Medium:
+        icon: huggingface
+        href: http://192.168.1.51:8000
+        ping: 192.168.1.105
+
+    - LLM Server Large:
+        icon: ollama
+        href: http://192.168.1.50:11434
+        ping: 192.168.1.106
+        customActions:
+          - name: Power On
+            icon: play
+            script: /data/data/com.termux/files/home/scripts/power_llm.sh large on
+          - name: Power Off
+            icon: stop
+            script: /data/data/com.termux/files/home/scripts/power_llm.sh large off

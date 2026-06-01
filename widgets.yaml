@@ -1,0 +1,4 @@
+# $HOME/homepage/config/widgets.yaml
+- script:
+    file: /data/data/com.termux/files/home/scripts/llm_stats.sh
+    refresh: 10s

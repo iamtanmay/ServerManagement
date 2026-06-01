@@ -93,19 +93,95 @@ sudo udevadm trigger
 #GTX 1070 Ubuntu
 # sudo apt purge '^nvidia-.*'
 # sudo apt install nvidia-driver-535 -y
-# sudo nvidia-xconfig --cool-bits=28
-# sudo nano /etc/modprobe.d/nvidia-power.conf
-# options nvidia NVreg_EnableGpuFirmware=0
-# sudo update-initramfs -u
-# sudo reboot
-# OR
-# sudo systemctl stop gdm3
-# sudo modprobe -r nvidia_drm
-# sudo modprobe -r nvidia_modeset
-# sudo rmmod nvidia_uvm nvidia_modeset nvidia
-# sudo systemctl start gdm3
+
+#This should limit the power to max P2 level, which should be 65W and prevent GPU hotspots going over 100C
+
+GPU_MODEL=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null)
+
+# Check if the detected GPU matches the GTX 1070 layout
+if [[ "$GPU_MODEL" == *"GTX 1070"* ]]; then
+	echo "Target GPU detected: $GPU_MODEL. Running thermal optimization..."
+
+	sudo rm -rf /etc/X11/xorg.conf.d/10-nvidia-master.conf
+	sudo tee /etc/X11/xorg.conf.d/10-nvidia-master.conf << 'EOF'
+	Section "Device"
+	    Identifier     "Device0"
+	    Driver         "nvidia"
+	    VendorName     "NVIDIA Corporation"
+	    BoardName      "GeForce GTX 1070"
+	    Option         "Coolbits" "28"
+	    Option         "AllowEmptyInitialConfiguration" "True"
+	    Option         "RegistryDwords" "PowerMizerEnable=0x1; PerfLevelSrc=0x3333; PowerMizerLevel=0x2; PowerMizerDefault=0x2; PowerMizerDefaultAC=0x2"
+	EndSection
+	EOF
+
+sudo rm -rf /etc/modprobe.d/nvidia-power.conf
+sudo tee /etc/modprobe.d/nvidia-power.conf << 'EOF'
+	options nvidia NVreg_EnableGpuFirmware=0
+	options nvidia NVreg_DynamicPowerManagement=0x02
+	options nvidia NVreg_PreserveVideoMemoryAllocations=1
+EOF
+
+	sudo update-initramfs -u
+
+	echo "PEG0" | sudo tee /proc/acpi/wakeup
+	echo "XHC" | sudo tee /proc/acpi/wakeup
+	sudo udevadm control --reload-rules
+	sudo udevadm trigger
+
+	sudo systemctl stop gdm3
+	sudo pkill -9 -f nvitop
+	sudo pkill -9 -f nvidia-smi
+	sudo pkill -9 -f nvidia-ctl
+	sudo fuser -vk -9 /dev/nvidia* 2>/dev/null
+	sudo lsof /dev/nvidia*
+
+	sudo modprobe -r nvidia_drm nvidia_modeset
+	sudo rmmod nvidia_uvm nvidia_modeset nvidia 2>/dev/null
+	sudo systemctl start gdm3
+
+	nvidia-smi -q -d PERFORMANCE | grep "Performance State"
+fi
+
+#power management
+sudo systemctl disable --now bluetooth
+sudo rfkill block bluetooth
+sudo bash -c 'echo 0 > /sys/class/backlight/nvidia_0/brightness'
+sudo systemctl stop gdm3
+sudo systemctl disable gdm3
+echo "blacklist snd_hda_intel" | sudo tee /etc/modprobe.d/blacklist-audio.conf
+echo "blacklist snd_hda_codec_hdmi" | sudo tee -a /etc/modprobe.d/blacklist-audio.conf
+sudo bash -c 'echo 0 > /sys/class/leds/asus::kbd_backlight/brightness'
 
 
+sudo systemctl enable nvidia-suspend.service
+sudo systemctl enable nvidia-resume.service
+sudo systemctl enable nvidia-hibernate.service
+echo "options nvidia NVreg_PreserveVideoMemoryAllocations=1" | sudo tee /etc/modprobe.d/nvidia-power-management.conf
+
+echo 'ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x030000", ATTR{power/control}="auto"' | sudo tee /etc/udev/rules.d/99-nvidia-pm.rules
+echo 'ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x10de", ATTR{class}=="0x040300", ATTR{power/control}="auto"' | sudo tee -a /etc/udev/rules.d/99-nvidia-pm.rules
+
+# Core Underclock (Locked to the maximum allowed safety floor)
+nvidia-settings -c :0 -a "[gpu:0]/GPUGraphicsClockOffset[3]=-200"
+
+# VRAM underclock (Reduces active pipeline generation cycles)
+nvidia-settings -c :0 -a "[gpu:0]/GPUMemoryTransferRateOffset[3]=-1000"
+
+
+sudo apt install tlp tlp-rdw -y
+sudo tlp start
+CONFIG_FILE="/etc/tlp.conf"
+# Update PCIE_ASPM_ON_AC (handles both commented '#' and active lines)
+sudo sed -i -E 's/^[#[:space:]]*PCIE_ASPM_ON_AC=.*/PCIE_ASPM_ON_AC=aspm_powersave/' "$CONFIG_FILE"
+# Update PCIE_ASPM_ON_BAT (handles both commented '#' and active lines)
+sudo sed -i -E 's/^[#[:space:]]*PCIE_ASPM_ON_BAT=.*/PCIE_ASPM_ON_BAT=aspm_powersave/' "$CONFIG_FILE"
+sudo systemctl restart tlp
+
+sudo apt install iw -y
+# Set the user-space network profile to wake-on-wlan magic mode
+nmcli connection modify "Pradhan" 802-11-wireless.wake-on-wlan magic
+sudo iw phy phy0 wowlan enable magic-packet
 
 #GTX 3060
 

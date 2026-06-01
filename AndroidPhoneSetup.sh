@@ -1,3 +1,4 @@
+#Termux
 termux-setup-storage
 pkg install termux-api
 pkg install termux-boot
@@ -7,17 +8,61 @@ chmod +x ~/.termux/boot/start-ssh.sh
 pkg install tur-repo -y
 pkg update
 
-#Matter Server + uDocker
+#Git
+pkg install git -y
+
+#ServerManagement
+git clone https://github.com/iamtanmay/ServerManagement.git
+cd ServerManagement
+git pull
+cd ..
+
+#Websocat
+wget https://github.com/vi/websocat/releases/download/v4.0.0-alpha3/websocat.aarch64-linux-android
+chmod +x websocat*
+mv websocat* $PREFIX/bin/websocat
+websocat --version
+
+#Homepage (Homelab dashboard)
+pkg install nodejs-lts -y
+git clone https://github.com/gethomepage/homepage.git
+cd homepage
+npm install -g pnpm
+pnpm install
+pnpm run build
+cd ..
+
+cp $HOME/ServerManagement/services.yaml $HOME/homepage/config/
+cp $HOME/ServerManagement/widgets.yaml $HOME/homepage/config/
+cp $HOME/ServerManagement/power_server.sh $HOME/homepage/config/
+cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
+HOMEPAGE_CONFIG_DIR=$HOME/homepage/config HOMEPAGE_ALLOWED_HOSTS="*" node $HOME/homepage/.next/standalone/server.js
+
+cat << 'EOF' >> ~/.termux/boot/start-dashboard
+#!/data/data/com.termux/files/usr/bin/bash
+termux-wake-lock
+
+export HOSTNAME=0.0.0.0
+export HOMEPAGE_CONFIG_DIR=$HOME/homepage/config
+export HOMEPAGE_ALLOWED_HOSTS="*"
+export NODE_ENV=production
+
+# Infinite loop: if the node server exits, it waits 5 seconds and starts again
+while true; do
+    node $HOME/homepage/.next/standalone/server.js
+    sleep 5
+done &
+EOF
+
+
+#uDocker
 pkg install udocker -y
 mkdir -p /data/data/com.termux/files/home/matter-data
 udocker pull ghcr.io/matter-js/python-matter-server:8.1.2
 udocker create --name=matter-server ghcr.io/matter-js/python-matter-server:8.1.2
 udocker setup --execmode=P1 matter-server
 
-udocker run --user=root -v /data/data/com.termux/files/home/matter-data:/data \
-matter-server \
---storage-path /data --paa-root-cert-dir /data/credentials --bluetooth-adapter 0
-
+#Matter server (doesn't work)
 udocker run \
   --user=root \
   -v /data/data/com.termux/files/home/matter-data:/data \
@@ -27,61 +72,13 @@ udocker run \
   --bluetooth-adapter 999 \
   --disable-server-interactions
 
+#Exec
 udocker run -i -t --user=root --entrypoint=/bin/sh matter-server
-
-cat <<EOF > pair_plug.py
-import sys
-import logging
-from chip import ChipDeviceCtrl
-
-# Disable verbose logging so we can see the output
-logging.getLogger('chip').setLevel(logging.ERROR)
-
-# Initialize the controller
-# The arguments correspond to: opCredsContext, fabricId, nodeId, adminVendorId
-# We use standard defaults (None, 1, 1, 65521)
-try:
-    dc = ChipDeviceCtrl.ChipDeviceController(None, 1, 1, 65521)
-    
-    NODE_ID = 1
-    SETUP_PIN = 2220660
-    IP_ADDRESS = "192.168.1.200"
-
-    print(f"Commissioning device at {IP_ADDRESS}...")
-    dc.CommissionOnNetwork(NODE_ID, SETUP_PIN, IP_ADDRESS)
-    
-    print("Commissioning Successful! Turning device ON...")
-    # Send ON: (nodeid, endpoint, cluster, command)
-    dc.SendCommand(NODE_ID, 1, 6, 1)
-    
-    print("Done. Power is now ON.")
-except Exception as e:
-    print(f"\nFailed: {e}")
-finally:
-    try:
-        dc.Shutdown()
-    except:
-        pass
-EOF
-
 
 #Proot
 pkg install proot-distro -y
 proot-distro install ubuntu
 proot-distro login ubuntu
-
-apt update
-apt install -y python3 python3-pip libgcc-s1 libstdc++6 python3-cryptography python3-aiohttp python3-orjson python3-zeroconf python3-grpcio python3-greenlet make python3-setuptools python3-wheel python3-certifi python3-yarl python3-multidict python3-idna python3-attr
-apt install -y build-essential python3-dev rustc cargo libssl-dev pkg-config
-pip3 install maturin --break-system-packages
-pip3 install python-matter-server[server] --break-system-packages
-
-
-
-wget https://github.com/vi/websocat/releases/download/v4.0.0-alpha3/websocat.aarch64-linux-android
-chmod +x websocat*
-mv websocat* $PREFIX/bin/websocat
-websocat --version
 
 #Docker
 pkg update && pkg upgrade
@@ -173,10 +170,11 @@ http {
     }
 }
 
-nginx
 
 #Tailscale
 
+#100.115.26.71
+#100.76.255.48
 
 #Admin Dashboard
 
