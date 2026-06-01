@@ -36,24 +36,40 @@ cp $HOME/ServerManagement/services.yaml $HOME/homepage/config/
 cp $HOME/ServerManagement/widgets.yaml $HOME/homepage/config/
 cp $HOME/ServerManagement/power_server.sh $HOME/homepage/config/
 cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
-HOMEPAGE_CONFIG_DIR=$HOME/homepage/config HOMEPAGE_ALLOWED_HOSTS="*" node $HOME/homepage/.next/standalone/server.js
 
-cat << 'EOF' >> ~/.termux/boot/start-dashboard
-#!/data/data/com.termux/files/usr/bin/bash
+#Create service
+mkdir -p $PREFIX/var/service/homepage/log
+mkdir -p /data/data/com.termux/files/home/homepage/logs
+
+cat << 'EOF' >> $PREFIX/var/service/homepage/run
+#!/data/data/com.termux/files/usr/bin/sh
+exec 2>&1
 termux-wake-lock
 
+# Hardcode environment variables into the daemon environment
+export PATH=/data/data/com.termux/files/usr/bin:$PATH
 export HOSTNAME=0.0.0.0
-export HOMEPAGE_CONFIG_DIR=$HOME/homepage/config
+export HOMEPAGE_CONFIG_DIR=/data/data/com.termux/files/home/homepage/config
 export HOMEPAGE_ALLOWED_HOSTS="*"
 export NODE_ENV=production
 
-# Infinite loop: if the node server exits, it waits 5 seconds and starts again
-while true; do
-    node $HOME/homepage/.next/standalone/server.js
-    sleep 5
-done &
+exec node /data/data/com.termux/files/home/homepage/.next/standalone/server.js
 EOF
 
+# Logger
+cat << 'EOF' >> $PREFIX/var/service/homepage/log/run
+#!/data/data/com.termux/files/usr/bin/sh
+
+exec svlogd -tt /data/data/com.termux/files/home/homepage/logs
+EOF
+
+chmod +x $PREFIX/var/service/homepage/run
+chmod +x $PREFIX/var/service/homepage/log/run
+sv stop homepage
+sv-disable homepage
+sv-enable homepage
+sv start homepage
+sv restart homepage
 
 #uDocker
 pkg install udocker -y

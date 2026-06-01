@@ -51,8 +51,9 @@ while true; do
     printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
     printf "Total Power:     %.4f Watts\n" "$total_w"
     printf "Homepage Status:"
-    ps aux | grep server.js
-    ss -tulpn | grep 3000
+    sv -w 1 status homepage
+    printf "\n Homepage Logs:"
+    tail -n 20 ~/homepage/logs/current
     echo "----------------------------"
     echo "Press Ctrl+C to drop to Shell"
     
