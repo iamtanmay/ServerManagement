@@ -5,14 +5,20 @@ matter() {
 }
 
 if [[ " $1 " == " -1 " ]]; then
-    { echo "nodes status 3"; sleep 20; } | matter | grep "status"
+    if [[ -f ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js ]]; then
+        { echo "nodes status 3"; sleep 20; } | matter | grep "status"
+    fi
 fi
 
 if [[ " $1 " == " 0 " ]]; then
-    { echo "commands onoff off 3 1"; sleep 20; } | matter
+    if [[ -f ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js ]]; then
+        { echo "commands onoff off 3 1"; sleep 20; } | matter
+    fi
 fi
 
 if [[ " $1 " == " 1 " ]]; then
-    { echo "commands onoff on 3 1"; sleep 20; } | matter
+    if [[ -f ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js ]]; then
+        { echo "commands onoff on 3 1"; sleep 20; } | matter
+    fi
 fi
 

@@ -50,9 +50,9 @@ while true; do
     printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
     printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
     printf "Total Power:     %.4f Watts\n" "$total_w"
-    printf "Homepage Status:"
+    printf "Homepage Status:\n"
     sv -w 1 status homepage
-    printf "\n Homepage Logs:"
+    printf "\nHomepage Logs:"
     tail -n 20 ~/homepage/logs/current
     echo "----------------------------"
     echo "Press Ctrl+C to drop to Shell"
