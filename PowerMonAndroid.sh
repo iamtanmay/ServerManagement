@@ -56,16 +56,19 @@ while true; do
 	total_w="0.0000"
 	fi
 
+	avg_w=$(echo "scale=4; ($voltage_mv / 1000) * ${current_avg:-0} / -1000" | bc -l)
+
 	clear
-	echo "--- Android Gateway ---"
+	echo "------------Android Gateway------------"
 	printf "CPU Usage:       %s%%\n" "$cpu_usage"
 	printf "RAM Usage:       %d MB (%s)\n" "$mem_used" "$(echo "scale=2; $mem_total / 1024" | bc -l)"
 	echo "Battery Level:   $percentage %"
 	printf "Voltage:         %.2f V\n" "$(echo "scale=2; $voltage_mv / 1000" | bc -l)"
 	printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
 	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
+	printf "Avg Power:       %.4f Watts\n" "$avg_w"
 	printf "Total Power:     %.4f Watts\n" "$total_w"
-
+	echo "------------Services------------------"
 	printf "Matter:          "
 	sv -w 1 status matter-shell | convert_time_format
 
