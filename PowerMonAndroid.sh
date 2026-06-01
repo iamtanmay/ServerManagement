@@ -53,7 +53,6 @@ while true; do
 	printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
 	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
 	printf "Total Power:     %.4f Watts\n" "$total_w"
-	printf "Total Power:     %.4f Watts\n" "$total_w"
 
 	printf "Matter:          "
 	sv -w 1 status matter-shell | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
