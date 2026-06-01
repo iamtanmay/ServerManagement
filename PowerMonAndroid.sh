@@ -53,17 +53,23 @@ while true; do
 	printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
 	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
 	printf "Total Power:     %.4f Watts\n" "$total_w"
-	printf "Matter Shell Status:\n"
+	printf "Total Power:     %.4f Watts\n" "$total_w"
+
+	printf "Matter:          "
 	sv -w 1 status matter-shell | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
 
-	#    printf "Gitea Status:\n"
-	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
-	printf "Homepage Status:\n"
+	printf "Homepage:        "
 	sv -w 1 status homepage | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
-	#    printf "NGINX Status:\n"
+
+	#    printf "Gitea:"
 	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
-	#    printf "Prometheus Status:\n"
+
+	#    printf "NGINX:"
 	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+
+	#    printf "Prometheus:"
+	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+
 	#    printf "\nHomepage Logs:"
 	#    tail -n 10 ~/homepage/logs/current
 	echo "----------------------------"
