@@ -3,6 +3,18 @@
 echo "Get latest ServerManagement changes for Android Gateway..."
 git -C $HOME/ServerManagement pull
 
+convert_time_format() {
+    awk '{
+        gsub(/[^0-9]/,"",$4); 
+        gsub(/[^0-9]/,"",$5); 
+        s=$5; 
+        d=int(s/86400); s%=86400; 
+        h=int(s/3600); s%=3600; 
+        m=int(s/60); s%=60; 
+        print "pid " $4 " - UP since " d " days, " h " hours, " m " minutes, " s " seconds"
+    }'
+}
+
 trap "break" INT
 
 while true; do
@@ -55,19 +67,19 @@ while true; do
 	printf "Total Power:     %.4f Watts\n" "$total_w"
 
 	printf "Matter:          "
-	sv -w 1 status matter-shell | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	sv -w 1 status matter-shell | convert_time_format
 
 	printf "Homepage:        "
-	sv -w 1 status homepage | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	sv -w 1 status homepage | convert_time_format
 
 	#    printf "Gitea:"
-	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	#sv -w 1 status gitea | convert_time_format
 
 	#    printf "NGINX:"
-	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	#sv -w 1 status gitea | convert_time_format
 
 	#    printf "Prometheus:"
-	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	#sv -w 1 status gitea | convert_time_format
 
 	#    printf "\nHomepage Logs:"
 	#    tail -n 10 ~/homepage/logs/current
