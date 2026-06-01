@@ -1,73 +1,74 @@
 #!/bin/bash
 
-#Get latest ServerManagement changes
+echo "Get latest ServerManagement changes for Android Gateway..."
 git -C $HOME/ServerManagement pull
 
 trap "break" INT
 
 while true; do
-    battery_json=$(termux-battery-status)
-    
-    # 1. Battery Data
-    voltage_mv=$(echo "$battery_json" | grep "voltage" | grep -oE "\-?[0-9]+" | head -n 1)
-    current_ua=$(echo "$battery_json" | grep "current" | grep -oE "\-?[0-9]+" | head -n 1)
-    current_avg=$(echo "$battery_json" | grep "current_average" | grep -oE "\-?[0-9]+" | head -n 1)
-    percentage=$(echo "$battery_json" | grep "percentage" | grep -oE "[0-9]+")
+	battery_json=$(termux-battery-status)
 
-    # 2. CPU Usage (Termux-Internal Workaround)
-    # Sums up the %CPU column for all processes Termux can see
-    cpu_usage=$(ps -eo %cpu | awk '{s+=$1} END {printf "%.1f", s/8}')
-    
-    # 3. RAM Usage (From /proc/meminfo)
-    mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    mem_avail=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-    mem_used=$(( (mem_total - mem_avail) / 1024 ))
-    mem_perc=$(echo "scale=1; 100 * ($mem_total - mem_avail) / $mem_total" | bc -l)
+	# 1. Battery Data
+	voltage_mv=$(echo "$battery_json" | grep "voltage" | grep -oE "\-?[0-9]+" | head -n 1)
+	current_ua=$(echo "$battery_json" | grep "current" | grep -oE "\-?[0-9]+" | head -n 1)
+	current_avg=$(echo "$battery_json" | grep "current_average" | grep -oE "\-?[0-9]+" | head -n 1)
+	percentage=$(echo "$battery_json" | grep "percentage" | grep -oE "[0-9]+")
+
+	# 2. CPU Usage (Termux-Internal Workaround)
+	# Sums up the %CPU column for all processes Termux can see
+	cpu_usage=$(ps -eo %cpu | awk '{s+=$1} END {printf "%.1f", s/8}')
+
+	# 3. RAM Usage (From /proc/meminfo)
+	mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+	mem_avail=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+	mem_used=$(( (mem_total - mem_avail) / 1024 ))
+	mem_perc=$(echo "scale=1; 100 * ($mem_total - mem_avail) / $mem_total" | bc -l)
 
 
-    # 3. RAM Usage (From /proc/meminfo)
-    mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-    mem_avail=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
-    mem_used=$(( (mem_total - mem_avail) / 1024 ))
-    mem_perc=$(echo "scale=1; 100 * ($mem_total - mem_avail) / $mem_total" | bc -l)
+	# 3. RAM Usage (From /proc/meminfo)
+	mem_total=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+	mem_avail=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+	mem_used=$(( (mem_total - mem_avail) / 1024 ))
+	mem_perc=$(echo "scale=1; 100 * ($mem_total - mem_avail) / $mem_total" | bc -l)
 
-    # 4. Power Logic
-    if [[ -z "$current_ua" || "$current_ua" -eq 0 ]]; then
-        use_current=${current_avg#-}
-    else
-        use_current=${current_ua#-}
-    fi
+	# 4. Power Logic
+	if [[ -z "$current_ua" || "$current_ua" -eq 0 ]]; then
+	use_current=${current_avg#-}
+	else
+	use_current=${current_ua#-}
+	fi
 
-    if [[ -n "$voltage_mv" && -n "$use_current" && "$use_current" -ne 0 ]]; then
-        total_w=$(echo "scale=4; ($voltage_mv / 1000) * ($use_current / 1000000)" | bc -l)
-    else
-        total_w="0.0000"
-    fi
+	if [[ -n "$voltage_mv" && -n "$use_current" && "$use_current" -ne 0 ]]; then
+	total_w=$(echo "scale=4; ($voltage_mv / 1000) * ($use_current / 1000000)" | bc -l)
+	else
+	total_w="0.0000"
+	fi
 
-    clear
-    echo "--- Android Gateway ---"
-    printf "CPU Usage:       %s%%\n" "$cpu_usage"
-    printf "RAM Usage:       %d MB (%s)\n" "$mem_used" "$(echo "scale=2; $mem_total / 1024" | bc -l)"
-    echo "Battery Level:   $percentage %"
-    printf "Voltage:         %.2f V\n" "$(echo "scale=2; $voltage_mv / 1000" | bc -l)"
-    printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
-    printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
-    printf "Total Power:     %.4f Watts\n" "$total_w"
-    printf "Matter Shell Status:\n"
-    sv -w 1 status matter-shell
-#    printf "Gitea Status:\n"
-#    sv -w 1 status gitea
-    printf "Homepage Status:\n"
-    sv -w 1 status homepage
-#    printf "NGINX Status:\n"
-#    sv -w 1 status nginx
-#    printf "Prometheus Status:\n"
-#    sv -w 1 status prometheus
-#    printf "\nHomepage Logs:"
-#    tail -n 10 ~/homepage/logs/current
-    echo "----------------------------"
-    echo "Press Ctrl+C to drop to Shell"
-    
-    sleep 1
+	clear
+	echo "--- Android Gateway ---"
+	printf "CPU Usage:       %s%%\n" "$cpu_usage"
+	printf "RAM Usage:       %d MB (%s)\n" "$mem_used" "$(echo "scale=2; $mem_total / 1024" | bc -l)"
+	echo "Battery Level:   $percentage %"
+	printf "Voltage:         %.2f V\n" "$(echo "scale=2; $voltage_mv / 1000" | bc -l)"
+	printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
+	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
+	printf "Total Power:     %.4f Watts\n" "$total_w"
+	printf "Matter Shell Status:\n"
+	sv -w 1 status matter-shell | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+
+	#    printf "Gitea Status:\n"
+	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	printf "Homepage Status:\n"
+	sv -w 1 status homepage | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	#    printf "NGINX Status:\n"
+	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	#    printf "Prometheus Status:\n"
+	#sv -w 1 status gitea | awk '{gsub(/[^0-9]/,"",$4); gsub(/[^0-9]/,"",$5); print "pid " $4 " - UP since " $5 "s"}'
+	#    printf "\nHomepage Logs:"
+	#    tail -n 10 ~/homepage/logs/current
+	echo "----------------------------"
+	echo "Press Ctrl+C to drop to Shell"
+
+	sleep 1
 done
 bash
