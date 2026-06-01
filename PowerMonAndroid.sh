@@ -1,4 +1,8 @@
 #!/bin/bash
+
+#Get latest ServerManagement changes
+git -C $HOME/ServerManagement pull
+
 trap "break" INT
 
 while true; do
@@ -41,19 +45,26 @@ while true; do
     fi
 
     clear
-    echo "--- Android Server Stats ---"
+    echo "--- Android Gateway ---"
     printf "CPU Usage:       %s%%\n" "$cpu_usage"
     printf "RAM Usage:       %d MB (%s)\n" "$mem_used" "$(echo "scale=2; $mem_total / 1024" | bc -l)"
-    echo "----------------------------"
     echo "Battery Level:   $percentage %"
     printf "Voltage:         %.2f V\n" "$(echo "scale=2; $voltage_mv / 1000" | bc -l)"
     printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
     printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
     printf "Total Power:     %.4f Watts\n" "$total_w"
+    printf "Matter Shell Status:\n"
+    sv -w 1 status matter-shell
+#    printf "Gitea Status:\n"
+#    sv -w 1 status gitea
     printf "Homepage Status:\n"
     sv -w 1 status homepage
-    printf "\nHomepage Logs:"
-    tail -n 20 ~/homepage/logs/current
+#    printf "NGINX Status:\n"
+#    sv -w 1 status nginx
+#    printf "Prometheus Status:\n"
+#    sv -w 1 status prometheus
+#    printf "\nHomepage Logs:"
+#    tail -n 10 ~/homepage/logs/current
     echo "----------------------------"
     echo "Press Ctrl+C to drop to Shell"
     

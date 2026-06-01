@@ -1,8 +1,11 @@
 #Termux
 termux-setup-storage
-pkg install termux-api
-pkg install termux-boot
+pkg install termux-api -y
+pkg install termux-boot -y
 mkdir -p ~/.termux/boot
+
+#SSH
+pkg install openssh -y
 printf "#!/data/data/com.termux/files/usr/bin/sh\ntermux-wake-lock\nsshd" > ~/.termux/boot/start-ssh.sh
 chmod +x ~/.termux/boot/start-ssh.sh
 pkg install tur-repo -y
@@ -261,11 +264,13 @@ if __name__ == '__main__':
 #Monitoring
 
 
-#NodeJS matter controller setup
-chmod +x websocat*
-mv websocat* $PREFIX/bin/websocat
-websocat --version
 
+
+
+
+
+
+#NodeJS matter controller setup
 mkdir /data/data/com.termux/files/home/matter && cd /data/data/com.termux/files/home/
 pkg update && pkg upgrade
 pkg install nodejs-lts tmux -y
@@ -322,6 +327,50 @@ commands onoff off 3 1
 alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
 { echo "commands onoff on 3 1"; sleep 15; } | matter
 { echo "commands onoff off 3 1"; sleep 15; } | matter
+
+
+#Service
+pkg update && pkg install termux-services -y
+
+mkdir -p $PREFIX/var/service/matter-shell/
+
+cat << 'EOF' > $PREFIX/var/service/matter-shell/run
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Ensure the named pipe exists
+if [ ! -p "$HOME/matter_pipe" ]; then
+    mkfifo "$HOME/matter_pipe"
+fi
+
+# Run a clean background stream wrapper
+tail -f "$HOME/matter_pipe" | node "$HOME/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js" > /dev/null 2>&1
+EOF
+
+chmod +x $PREFIX/var/service/matter-shell/run
+source $PREFIX/etc/profile.d/start-services.sh
+pkill -f "runsv"
+sv-enable matter-shell
+sv down matter-shell
+sv up matter-shell
+sv status matter-shell
+
+#Add aliases to .bashrc
+cat << 'EOF' >> ~/.bashrc
+
+alias matter-on='echo "commands onoff on 3 1" > ~/matter_pipe'
+alias matter-off='echo "commands onoff off 3 1" > ~/matter_pipe'
+alias matter-status='sv status matter-shell'
+alias matter-restart='sv restart matter-shell'
+EOF
+
+source ~/.bashrc
+
+
+
+
+
+
+#Wake up on lan
 
 #Wake up server via bluetooth
 lsusb | grep Bluetooth
