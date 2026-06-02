@@ -15,6 +15,7 @@ cp $HOME/ServerManagement/services.yaml $HOME/homepage/config/
 cp $HOME/ServerManagement/widgets.yaml $HOME/homepage/config/
 cp $HOME/ServerManagement/power_server.sh $HOME/homepage/config/
 cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
+cp $HOME/ServerManagement/settings.yaml $HOME/homepage/config/settings.yaml
 
 convert_time_format() {
     awk '{

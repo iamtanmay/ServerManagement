@@ -1,0 +1,3 @@
+# $HOME/homepage/config/settings.yaml
+   allowedScripts:
+     - /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh
