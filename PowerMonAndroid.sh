@@ -76,7 +76,7 @@ while true; do
 	printf "Avg Power:       %.4f W\n" "$avg_w"
 	printf "Current Power:   %.4f W\n" "$total_w"
 	echo "------------Services------------------"
-	echo "Service          PID          Status          UPTIME"
+	echo "Service          PID            Status      UPTIME"
 	printf "Matter:          "
 	sv -w 1 status matter-shell | convert_time_format
 
