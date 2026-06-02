@@ -74,7 +74,7 @@ while true; do
 	printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
 	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
 	printf "Avg Power:       %.4f Watts\n" "$avg_w"
-	printf "Total Power:     %.4f Watts\n" "$total_w"
+	printf "Current Power:   %.4f Watts\n" "$total_w"
 	echo "------------Services------------------"
 	printf "Matter:          "
 	sv -w 1 status matter-shell | convert_time_format
