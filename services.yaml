@@ -1,40 +1,37 @@
 # $HOME/homepage/config/services.yaml
-# customActions call Flask API: http://localhost:9001/<action>/<server_id>
-# which maps directly to: server_management_utilities.sh <server_id> <action>
-
 - LLM Cluster:
     - LLM Server Small:
-        icon: cpu
-        href: http://192.168.1.52:5000
-        ping: 192.168.1.14
+        icon: ollama
+        href: http://192.168.1.104:8081
+        ping: 192.168.1.104
         customActions:
           - name: Power On
             icon: play
-            url: http://localhost:9001/switch_smart_plug_restart/2
+            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 2 switch_smart_plug_restart
           - name: Power Off
             icon: stop
-            url: http://localhost:9001/stop_server/2
+            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 2 stop_server
 
     - LLM Server Medium:
-        icon: huggingface
-        href: http://192.168.1.51:8000
+        icon: ollama
+        href: http://192.168.1.105:8001
         ping: 192.168.1.105
         customActions:
           - name: Power On
             icon: play
-            url: http://localhost:9001/wake_server/3
+            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 3 wake_server
           - name: Power Off
             icon: stop
-            url: http://localhost:9001/stop_server/3
+            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 3 stop_server
 
     - LLM Server Large:
         icon: ollama
-        href: http://192.168.1.50:11434
+        href: http://192.168.1.106:8081
         ping: 192.168.1.106
         customActions:
           - name: Power On
             icon: play
-            url: http://localhost:9001/wake_server/4
+            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 4 wake_server
           - name: Power Off
             icon: stop
-            url: http://localhost:9001/stop_server/4
+            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 4 stop_server
