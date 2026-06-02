@@ -74,6 +74,24 @@ sv-enable homepage
 sv start homepage
 sv restart homepage
 
+#Homepage Webhook service
+mkdir -p $PREFIX/var/service/homepage_webhook/log
+
+cat << 'EOF' > $PREFIX/var/service/homepage_webhook/run
+#!/data/data/com.termux/files/usr/bin/sh
+exec 2>&1
+termux-wake-lock
+
+exec python3 /data/data/com.termux/files/home/ServerManagement/homepage_webhook_server.py
+EOF
+
+chmod +x $PREFIX/var/service/homepage_webhook/run
+source $PREFIX/etc/profile.d/start-services.sh
+pkill -f "runsv"
+sv-enable homepage_webhook
+sv start homepage_webhook
+
+
 #uDocker
 pkg install udocker -y
 mkdir -p /data/data/com.termux/files/home/matter-data
