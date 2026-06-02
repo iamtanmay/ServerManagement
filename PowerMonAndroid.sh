@@ -1,7 +1,14 @@
 #!/bin/bash
 
 echo "Get latest ServerManagement changes for Android Gateway..."
-git -C $HOME/ServerManagement pull
+PULL_OUTPUT=$(git -C $HOME/ServerManagement pull 2>&1)
+echo "$PULL_OUTPUT"
+FIRST_LINE=$(echo "$PULL_OUTPUT" | head -n 1)
+
+if [[ ! "$FIRST_LINE" =~ "Already up to date" ]]; then
+    echo "New changes detected. Restarting script..."
+    exec "$0" "$@"
+fi
 
 convert_time_format() {
     awk '{
