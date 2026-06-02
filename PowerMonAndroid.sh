@@ -10,6 +10,12 @@ if [[ ! "$FIRST_LINE" =~ "Already up to date" ]]; then
     exec "$0" "$@"
 fi
 
+echo "Updating Homepage..."
+cp $HOME/ServerManagement/services.yaml $HOME/homepage/config/
+cp $HOME/ServerManagement/widgets.yaml $HOME/homepage/config/
+cp $HOME/ServerManagement/power_server.sh $HOME/homepage/config/
+cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
+
 convert_time_format() {
     awk '{
         gsub(/[^0-9]/,"",$4); 
