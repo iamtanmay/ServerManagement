@@ -18,7 +18,7 @@ convert_time_format() {
         d=int(s/86400); s%=86400; 
         h=int(s/3600); s%=3600; 
         m=int(s/60); s%=60; 
-        print "pid " $4 " - UP  " d "days" h "h" m "m" s "s"
+        print "pid " $4 "   UP  " d "days" h "h" m "m" s "s"
     }'
 }
 
@@ -73,8 +73,8 @@ while true; do
 	printf "Voltage:         %.2f V\n" "$(echo "scale=2; $voltage_mv / 1000" | bc -l)"
 	printf "Current Draw:    %.2f mA\n" "$(echo "scale=2; ${current_ua:-0} / -1000" | bc -l)"
 	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
-	printf "Avg Power:       %.4f Watts\n" "$avg_w"
-	printf "Current Power:   %.4f Watts\n" "$total_w"
+	printf "Avg Power:       %.4f W\n" "$avg_w"
+	printf "Current Power:   %.4f W\n" "$total_w"
 	echo "------------Services------------------"
 	printf "Matter:          "
 	sv -w 1 status matter-shell | convert_time_format
