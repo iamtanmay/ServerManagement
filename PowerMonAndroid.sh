@@ -18,7 +18,7 @@ convert_time_format() {
         d=int(s/86400); s%=86400; 
         h=int(s/3600); s%=3600; 
         m=int(s/60); s%=60; 
-        print "pid " $4 "          UP          " d "days" h "h" m "m" s "s"
+        print "" $4 "          UP          " d "days" h "h" m "m" s "s"
     }'
 }
 
@@ -76,7 +76,7 @@ while true; do
 	printf "Avg Power:       %.4f W\n" "$avg_w"
 	printf "Current Power:   %.4f W\n" "$total_w"
 	echo "------------Services------------------"
-	printf "Service          |PID          |Status          |UPTIME"
+	echo "Service          PID          Status          UPTIME"
 	printf "Matter:          "
 	sv -w 1 status matter-shell | convert_time_format
 
