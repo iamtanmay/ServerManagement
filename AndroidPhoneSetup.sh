@@ -91,6 +91,17 @@ pkill -f "runsv"
 sv-enable homepage_webhook
 sv start homepage_webhook
 
+#Logger
+cat << 'EOF' > $PREFIX/var/service/homepage_webhook/log/run
+#!/data/data/com.termux/files/usr/bin/sh
+exec svlogd -tt ./main
+EOF
+
+chmod +x $PREFIX/var/service/homepage_webhook/log/run
+mkdir -p $PREFIX/var/service/homepage_webhook/log/main
+sv restart homepage_webhook
+
+
 
 #uDocker
 pkg install udocker -y
