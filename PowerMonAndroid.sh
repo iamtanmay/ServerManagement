@@ -75,21 +75,21 @@ while true; do
 	printf "Avg Current :    %.2f mA\n" "$(echo "scale=2; ${current_avg:-0} / -1000" | bc -l)"
 	printf "Avg Power:       %.4f W\n" "$avg_w"
 	printf "Current Power:   %.4f W\n" "$total_w"
-	echo "------------Services------------------"
-	echo "Service          PID            Status      UPTIME"
-	printf "Matter:          "
+	echo "------------Services-------------------"
+	echo "Service          PID            Status      Uptime"
+	printf "Matter          "
 	sv -w 1 status matter-shell | convert_time_format
 
-	printf "Homepage:        "
+	printf "Homepage        "
 	sv -w 1 status homepage | convert_time_format
 
-	#    printf "Gitea:"
+	printf "Gitea        \n"
 	#sv -w 1 status gitea | convert_time_format
 
-	#    printf "NGINX:"
+	printf "NGINX        \n"
 	#sv -w 1 status gitea | convert_time_format
 
-	#    printf "Prometheus:"
+	printf "Prometheus        \n"
 	#sv -w 1 status gitea | convert_time_format
 
 	#    printf "\nHomepage Logs:"
