@@ -10,8 +10,10 @@ Run in Termux: python server_management_api.py
 import subprocess
 import logging
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 SCRIPT = "/data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh"

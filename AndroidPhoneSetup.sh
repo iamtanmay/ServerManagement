@@ -75,6 +75,7 @@ sv start homepage
 sv restart homepage
 
 #Homepage Webhook service
+pip install flask flask-cors --break-system-packages
 mkdir -p $PREFIX/var/service/homepage_webhook/log
 
 cat << 'EOF' > $PREFIX/var/service/homepage_webhook/run
