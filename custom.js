@@ -6,6 +6,12 @@
 (function () {
   const SERVERS = [
     {
+      name: "Matter Smart Plug",
+      id: 1,
+      onAction:  "switch_smart_plug_on",
+      offAction: "switch_smart_plug_off",
+    },
+    {
       name: "LLM Server Small",
       id: 2,
       onAction:  "switch_smart_plug_restart",
@@ -22,12 +28,6 @@
       id: 4,
       onAction:  "wake_server",
       offAction: "stop_server",
-    },
-    {
-      name: "Matter Smart Plug",
-      id: 5,
-      onAction:  "switch_smart_plug_on",
-      offAction: "switch_smart_plug_off",
     },
   ];
 
