@@ -39,7 +39,7 @@ fi
 CURRENT_DIR="$(dirname "$0")"
 CONFIG_FILE="${CURRENT_DIR}/servers.conf"
 SMART_PLUG_STATUS=""
-SMART_PLUG_STATUS=$(switch_smart_plug "status")
+
 
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
@@ -204,6 +204,8 @@ switch_smart_plug() {
 }
 
 #Main
+SMART_PLUG_STATUS=$(switch_smart_plug "status")
+
 for s in "${SERVERS[@]}"; do
 	IFS="|" read -r ID TITLE IP PORT USER PASS CMDSTOP MAC <<< "$s"
 
