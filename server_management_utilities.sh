@@ -235,3 +235,5 @@ for s in "${SERVERS[@]}"; do
 		fi
 	fi
 done
+
+switch_smart_plug "$2"
