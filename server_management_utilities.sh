@@ -190,17 +190,14 @@ connect_server_vnc() {
 switch_smart_plug() {
 	local switch="$1"
 	local script_dir
-	script_dir=$(dirname "$0")
+	script_dir=$(dirname "${BASH_SOURCE[0]}")
 
-	if [[ "$switch" == "on" ]]; then
-		$script_dir/switch_matter_smartplug.sh 1
-	fi
-	if [[ "$switch" == "off" ]]; then
-		$script_dir/switch_matter_smartplug.sh 0
-	fi
-	if [[ "$switch" == "status" ]]; then
-		$script_dir/switch_matter_smartplug.sh -1
-	fi
+	case "$switch" in
+		"on")     "${script_dir}/switch_matter_smartplug.sh" 1 ;;
+		"off")    "${script_dir}/switch_matter_smartplug.sh" 0 ;;
+		"status") "${script_dir}/switch_matter_smartplug.sh" -1 ;;
+		*)        echo "Error: Invalid option '$switch'. Use on|off|status." >&2; return 1 ;;
+	esac
 }
 
 #Main
@@ -232,6 +229,7 @@ for s in "${SERVERS[@]}"; do
 			switch_smart_plug "off"
 		elif [[ "$1" == "switch_smart_plug_restart" ]]; then
 			switch_smart_plug "off"
+			sleep 5
 			switch_smart_plug "on"
 		fi
 	fi
