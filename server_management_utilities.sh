@@ -192,12 +192,16 @@ switch_smart_plug() {
 	local script_dir
 	script_dir=$(dirname "${BASH_SOURCE[0]}")
 
+	echo "Debug: Looking for script in $script_dir"
+
 	case "$switch" in
 		"on")     "${script_dir}/switch_matter_smartplug.sh" 1 ;;
 		"off")    "${script_dir}/switch_matter_smartplug.sh" 0 ;;
 		"status") "${script_dir}/switch_matter_smartplug.sh" -1 ;;
 		*)        echo "Error: Invalid option '$switch'. Use on|off|status." >&2; return 1 ;;
 	esac
+
+	switch_smart_plug "$@"
 }
 
 #Main

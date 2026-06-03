@@ -6,7 +6,7 @@ PIPE="$HOME/matter_pipe"
 #    node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js "$@"
 #}
 
-if [[ -f ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js ]]; then
+if [[ -f "$HOME/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js" ]]; then
 	if [ ! -p "$PIPE" ]; then
 	    echo "Error: Matter service pipe not found. Is the service running?" >&2
 	    exit 1
