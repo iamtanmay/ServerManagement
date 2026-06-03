@@ -89,6 +89,8 @@ EOF
 chmod +x $PREFIX/var/service/homepage_webhook/run
 source $PREFIX/etc/profile.d/start-services.sh
 pkill -f "runsv"
+sv stop homepage_webhook
+sv-disable homepage_webhook
 sv-enable homepage_webhook
 sv start homepage_webhook
 
