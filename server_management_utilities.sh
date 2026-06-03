@@ -190,7 +190,7 @@ connect_server_vnc() {
 switch_smart_plug() {
 	local switch="$1"
 	local script_dir
-	script_dir=$(dirname "${BASH_SOURCE[0]}")
+	script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
 	echo "Debug: Looking for script in $script_dir"
 
@@ -200,12 +200,9 @@ switch_smart_plug() {
 		"status") "${script_dir}/switch_matter_smartplug.sh" -1 ;;
 		*)        echo "Error: Invalid option '$switch'. Use on|off|status." >&2; return 1 ;;
 	esac
-
-	switch_smart_plug "$@"
 }
 
 #Main
-SMART_PLUG_STATUS=$(switch_smart_plug "status")
 
 for s in "${SERVERS[@]}"; do
 	IFS="|" read -r ID TITLE IP PORT USER PASS CMDSTOP MAC <<< "$s"
@@ -238,3 +235,5 @@ for s in "${SERVERS[@]}"; do
 		fi
 	fi
 done
+
+switch_smart_plug "$@"
