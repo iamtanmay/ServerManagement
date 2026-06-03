@@ -23,6 +23,12 @@
       onAction:  "wake_server",
       offAction: "stop_server",
     },
+    {
+      name: "Tapo P110M Smart Plug",
+      id: 5,
+      onAction:  "switch_smart_plug_on",
+      offAction: "switch_smart_plug_off",
+    },
   ];
 
   const API = "http://100.115.26.71:9001";
