@@ -33,10 +33,11 @@ if [ "$#" -ne 2 ]; then
 fi
 
 # Load server configuration
-CONFIG_FILE="./servers.conf"
+
 
 #Get directory of this script
 CURRENT_DIR="$(dirname "$0")"
+CONFIG_FILE="${CURRENT_DIR}/servers.conf"
 SMART_PLUG_STATUS=""
 SMART_PLUG_STATUS=$(switch_smart_plug "status")
 

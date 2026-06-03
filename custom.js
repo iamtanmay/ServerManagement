@@ -1,6 +1,6 @@
 /* Server Management Action Buttons
  * Injects Power On / Power Off buttons into each LLM server card
- * Calls Flask API: http://localhost:9001/<action>/<server_id>
+ * Calls Flask API: http://100.115.26.71:9001/<action>/<server_id>
  */
 
 (function () {
@@ -25,7 +25,7 @@
     },
   ];
 
-  const API = "http://localhost:9001";
+  const API = "http://100.115.26.71:9001";
 
   function triggerAction(action, serverId, btn) {
     btn.disabled = true;
