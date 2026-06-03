@@ -1,37 +1,17 @@
 # $HOME/homepage/config/services.yaml
+
 - LLM Cluster:
     - LLM Server Small:
         icon: ollama
-        href: http://192.168.1.104:8081
-        ping: 192.168.1.104
-        customActions:
-          - name: Power On
-            icon: play
-            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 2 switch_smart_plug_restart
-          - name: Power Off
-            icon: stop
-            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 2 stop_server
+        href: http://192.168.1.52:5000
+        ping: 192.168.1.14
 
     - LLM Server Medium:
         icon: ollama
-        href: http://192.168.1.105:8001
+        href: http://192.168.1.51:8000
         ping: 192.168.1.105
-        customActions:
-          - name: Power On
-            icon: play
-            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 3 wake_server
-          - name: Power Off
-            icon: stop
-            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 3 stop_server
 
     - LLM Server Large:
         icon: ollama
-        href: http://192.168.1.106:8081
+        href: http://192.168.1.50:11434
         ping: 192.168.1.106
-        customActions:
-          - name: Power On
-            icon: play
-            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 4 wake_server
-          - name: Power Off
-            icon: stop
-            script: /data/data/com.termux/files/home/ServerManagement/server_management_utilities.sh 4 stop_server
