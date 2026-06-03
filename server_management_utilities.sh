@@ -207,7 +207,7 @@ switch_smart_plug() {
 for s in "${SERVERS[@]}"; do
 	IFS="|" read -r ID TITLE IP PORT USER PASS CMDSTOP MAC <<< "$s"
 
-	if [[ " $SELECTION " =~ " $2 " ]]; then
+	if [[ " $2 " == " $ID " ]]; then
 		if [[ "$1" == "probe_ssh" ]]; then
 			probe_ssh "$IP" "$PORT"
 		elif [[ "$1" == "get_status" ]]; then
