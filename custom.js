@@ -24,7 +24,7 @@
       offAction: "stop_server",
     },
     {
-      name: "Tapo P110M Smart Plug",
+      name: "Matter Smart Plug",
       id: 5,
       onAction:  "switch_smart_plug_on",
       offAction: "switch_smart_plug_off",
