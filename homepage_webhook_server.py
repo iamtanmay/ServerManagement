@@ -115,6 +115,17 @@ def run_action(action: str, server_id: int):
         return jsonify({"server_id": server_id, "action": action, "success": False,
                         "returncode": -1, "output": str(e)}), 500
 
+
+# --- FORCE BROWSER TO ALWAYS FETCH FRESH FILE LISTS ---
+@app.after_request
+def add_header(response):
+    """Disable browser caching so file lists update instantly"""
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
 #Health Check
 @app.route("/health", methods=["GET"])
 def health():
