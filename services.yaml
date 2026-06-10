@@ -1,22 +1,19 @@
-# $HOME/homepage/config/services.yaml
-
+# $home/homepage/config/services.yaml
 - LLM Cluster:
     - Matter Smart Plug:
         icon: ollama
         href: http://192.168.1.200
         ping: 192.168.1.200
-
-    - LLM Server Small:
+    - LLMServerSmall:
         icon: ollama
         href: http://192.168.1.104:8081
         ping: 192.168.1.104
-
-    - LLM Server Medium:
+    - LLMServerMedium:
         icon: ollama
         href: http://192.168.1.105:8081
         ping: 192.168.1.105
-
-    - LLM Server Large:
+    - LLMServerLarge:
         icon: ollama
         href: http://192.168.1.106:8081
         ping: 192.168.1.106
+
