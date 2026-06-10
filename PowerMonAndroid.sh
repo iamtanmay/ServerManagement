@@ -11,12 +11,7 @@ if [[ ! "$FIRST_LINE" =~ "Already up to date" ]]; then
 fi
 
 echo "Updating Homepage..."
-cp $HOME/ServerManagement/services.yaml $HOME/homepage/config/
-cp $HOME/ServerManagement/widgets.yaml $HOME/homepage/config/
-cp $HOME/ServerManagement/power_server.sh $HOME/homepage/config/
-cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
-cp $HOME/ServerManagement/settings.yaml $HOME/homepage/config/settings.yaml
-cp $HOME/ServerManagement/custom.js $HOME/homepage/config/custom.js
+cp $HOME/ServerManagement/Homepage/* $HOME/homepage/config/
 
 # Copy the static folder so the server can find CSS/JS files
 cp -r $HOME/homepage/.next/static $HOME/homepage/.next/standalone/.next/

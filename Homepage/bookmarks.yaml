@@ -1,0 +1,35 @@
+# $HOME/homepage/config/bookmarks.yaml
+- Repositories:
+    - PrivateContext:
+        - abbr: PC
+	  icon: github
+          href: https://github.com/iamtanmay/PrivateContext
+    - ServerManagement:
+        - abbr: SM
+	  icon: github
+          href: https://github.com/iamtanmay/ServerManagement
+
+- Monitoring:
+    - LLMServerMini:
+        - abbr: XS
+	  icon: reddit
+          href: https://reddit.com/
+    - LLMServerSmall:
+        - abbr: S
+	  icon: reddit
+          href: https://reddit.com/
+    - LLMServerMedium:
+        - abbr: M
+	  icon: reddit
+          href: https://reddit.com/
+    - LLMServerLarge:
+        - abbr: XL
+	  icon: reddit
+          href: https://reddit.com/
+
+- Homepage:
+    - DisconnectedAI:
+        - abbr: DI
+	  icon: youtube
+          href: https://www.disconnected-ai.com/
+
