@@ -8,7 +8,7 @@ Run in Termux: python server_management_api.py
 import os
 import subprocess
 import logging
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory, render_template_string
 from flask_cors import CORS
 
 app = Flask(__name__)
