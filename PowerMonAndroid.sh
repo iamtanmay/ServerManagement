@@ -18,6 +18,11 @@ cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
 cp $HOME/ServerManagement/settings.yaml $HOME/homepage/config/settings.yaml
 cp $HOME/ServerManagement/custom.js $HOME/homepage/config/custom.js
 
+# Copy the static folder so the server can find CSS/JS files
+cp -r $HOME/homepage/.next/static $HOME/homepage/.next/standalone/.next/
+# Copy the public folder for icons and images
+cp -r $HOME/homepage/public $HOME/homepage/.next/standalone/
+
 convert_time_format() {
     awk '{
         gsub(/[^0-9]/,"",$4); 
