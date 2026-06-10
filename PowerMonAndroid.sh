@@ -13,11 +13,12 @@ fi
 echo "Updating Homepage..."
 cp $HOME/ServerManagement/Homepage/* $HOME/homepage/config/
 
+sv restart homepage_webhook
+
 # Copy the static folder so the server can find CSS/JS files
 cp -r $HOME/homepage/.next/static $HOME/homepage/.next/standalone/.next/
 # Copy the public folder for icons and images
 cp -r $HOME/homepage/public $HOME/homepage/.next/standalone/
-
 convert_time_format() {
     awk '{
         gsub(/[^0-9]/,"",$4); 
