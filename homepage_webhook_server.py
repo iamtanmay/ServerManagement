@@ -5,6 +5,7 @@ Generic endpoint: GET /<action>/<server_id>
 Maps directly to: server_management_utilities.sh <server_id> <action>
 Run in Termux: python server_management_api.py
 """
+import os
 import subprocess
 import logging
 from flask import Flask, jsonify
@@ -19,7 +20,7 @@ SCRIPT = "/data/data/com.termux/files/home/ServerManagement/server_management_ut
 #File Server
 # --- SIMPLE HTML TEMPLATE TO BROWSE DIRECTORIES ---
 DIR_TEMPLATE = """
-<!://html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Termux Home Index</title>
