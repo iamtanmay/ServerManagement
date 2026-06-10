@@ -20,6 +20,50 @@ cd ServerManagement
 git pull
 cd ..
 
+#Image manipulation
+pkg install imagemagick -y
+
+#OCR
+#pkg install tesseract -y
+#pkg install tur-repo -y && pkg update
+#pkg install matplotlib python-opencv-python python-numpy -y
+
+#Version check
+#python -c "import cv2; print('OpenCV Version:', cv2.__version__)"
+#git clone https://github.com/jiweibo/SSOCR.git
+
+#Commands to take photo with flash, rotate, crop and threshold it, then extract the numbers
+#termux-torch on && termux-camera-photo -c 0 power_meter.jpg && convert power_meter.jpg -resize 640x power_meter.jpg && convert power_meter.jpg -crop 180x180+280+270 power_meter2.jpg
+# && convert power_meter2.jpg -colorspace gray -negate -threshold 40% -negate power_meter3.jpg && convert power_meter3.jpg -rotate -5 power_meter4.jpg && convert power_meter4.jpg -crop 100x80+60+30 power_meter5.jpg && convert power_meter5.jpg -morphology Open Square:1 power_meter_clean.jpg && tesseract power_meter_clean.jpg stdout --psm 6 outputbase digits
+#python ./SSOCR/ssocr.py -d -1 -t 38 gray_threshold white_border power_meter_clean.jpg
+#-d -1 -t 38 gray_threshold white_border
+
+#Download the images
+#clear && scp -P 8022 termux@192.168.1.101:~/power_meter*.jpg ~/Downloads/
+#clear && sshpass -p "google" scp -P 8022 termux@192.168.1.101:~/power_meter*.jpg ~/Downloads/
+
+#Service
+mkdir $PREFIX/var/service/camera_powermeter
+cat << 'EOF' >> $PREFIX/var/service/camera_powermeter/run
+#!/data/data/com.termux/files/usr/bin/bash
+
+termux-wake-lock
+
+while true; do
+	termux-camera-photo -c 0 /data/data/com.termux/files/home/power_meter.jpg || true
+	if [ -f /data/data/com.termux/files/home/power_meter.jpg ]; then
+		convert /data/data/com.termux/files/home/power_meter.jpg -resize 640x -crop 180x180+280+270 /data/data/com.termux/files/home/power_meter2.jpg || true
+	fi
+	sleep 1
+done
+EOF
+
+chmod +x $PREFIX/var/service/camera_powermeter/run
+sv-enable camera_powermeter
+sv status camera_powermeter
+
+
+
 #Websocat
 wget https://github.com/vi/websocat/releases/download/v4.0.0-alpha3/websocat.aarch64-linux-android
 chmod +x websocat*
