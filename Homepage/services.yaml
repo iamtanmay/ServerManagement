@@ -4,6 +4,10 @@
         icon: ollama
         href: http://192.168.1.200
         ping: 192.168.1.200
+    - LLMServerMini:
+        icon: ollama
+        href: http://192.168.1.107:8081
+        ping: 192.168.1.104
     - LLMServerSmall:
         icon: ollama
         href: http://192.168.1.104:8081
@@ -26,13 +30,13 @@
         href: http://192.168.1.101:9001/MediaServer
     - LLMServerMini:
         icon: openmediavault
-        href: http://192.168.1.101:9001/MediaServer
+        href: http://192.168.1.107:9001/MediaServer
     - LLMServerSmall:
         icon: openmediavault
-        href: http://192.168.1.101:9001/MediaServer
+        href: http://192.168.1.104:9001/MediaServer
     - LLMServerMedium:
         icon: openmediavault
-        href: http://192.168.1.101:9001/MediaServer
+        href: http://192.168.1.105:9001/MediaServer
     - LLMServerLarge:
         icon: openmediavault
-        href: http://192.168.1.101:9001/MediaServer
+        href: http://192.168.1.106:9001/MediaServer

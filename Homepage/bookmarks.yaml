@@ -10,6 +10,10 @@
           href: https://github.com/iamtanmay/ServerManagement
 
 - Monitoring:
+    - AndroidGateway:
+        - abbr: AG
+          icon: reddit
+          href: https://reddit.com/
     - LLMServerMini:
         - abbr: XS
           icon: reddit
