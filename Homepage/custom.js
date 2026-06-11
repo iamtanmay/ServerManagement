@@ -120,7 +120,12 @@ function injectMyCustomFooter() {
     meterImg.alt = "Power Meter Status";
     meterImg.style.cssText = "display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
 
-    footerDiv.appendChild(meterImg);
+    const imgLink = document.createElement("a");
+    imgLink.href = "http://192.168.1.101:9001/power_meter.jpg";
+    imgLink.target = "_blank"; // This opens it in a new tab
+    imgLink.appendChild(meterImg);
+
+    footerDiv.appendChild(imgLink);
     layoutContainer.prepend(footerDiv);
 
     setInterval(() => {
