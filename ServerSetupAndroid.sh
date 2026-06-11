@@ -50,11 +50,11 @@ cat << 'EOF' >> $PREFIX/var/service/camera_powermeter/run
 termux-wake-lock
 
 while true; do
-	termux-camera-photo -c 0 /data/data/com.termux/files/home/power_meter.jpg || true
+	timeout 5 termux-camera-photo -c 0 /data/data/com.termux/files/home/power_meter.jpg || true
 	if [ -f /data/data/com.termux/files/home/power_meter.jpg ]; then
 		convert /data/data/com.termux/files/home/power_meter.jpg -resize 640x -crop 180x180+280+270 /data/data/com.termux/files/home/power_meter2.jpg || true
 	fi
-	sleep 1
+	sleep 10
 done
 EOF
 
