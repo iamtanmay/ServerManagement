@@ -120,8 +120,12 @@ function injectMyCustomFooter() {
     meterImg.style.cssText = "display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
 
     footerDiv.appendChild(meterImg);
-    
     layoutContainer.prepend(footerDiv);
+
+    setInterval(() => {
+      const uniqueToken = Date.now();
+      meterImg.src = `${baseImgUrl}?t=${uniqueToken}`;
+    }, 10000);
   }
 
   // Check until page layout is ready, then add the footer elements
