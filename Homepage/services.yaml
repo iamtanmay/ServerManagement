@@ -16,3 +16,12 @@
         icon: ollama
         href: http://192.168.1.106:8081
         ping: 192.168.1.106
+- My Storage:
+    - File Server:
+        icon: openmediavault
+        href: http://192.168.1.101:9001
+        widget:
+          type: iframe
+          url: http://192.168.1.101:9001
+          height: 500 # Adjust this height to fit your screen
+

@@ -1,0 +1,4 @@
+# $HOME/homepage/config/settings.yaml
+footer:
+  text: '<img src="http://192.168.1.101:9001/power_meter2.jpg" alt="Power Meter" style="max-width:100%; height:auto; display:block; margin:10px auto; border-radius:8px;">'
+
