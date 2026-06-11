@@ -112,7 +112,7 @@
 
         const footerDiv = document.createElement("div");
         footerDiv.id = "my-custom-homelab-footer";
-        footerDiv.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; margin: 20px 0; padding: 10px; width: 100%; position: relative; z-index: 9999; clear: both;";
+        footerDiv.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; margin: 20px 0; padding: 10px 10px 10px 2rem; position: relative; z-index: 9999; clear: both;";
 
         const meterImg = document.createElement("img");
         const baseImgUrl = "http://192.168.1.101:9001/power_meter2.jpg";
