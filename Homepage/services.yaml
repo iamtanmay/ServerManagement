@@ -16,12 +16,23 @@
         icon: ollama
         href: http://192.168.1.106:8081
         ping: 192.168.1.106
+
 - File Servers:
     - MediaServer:
         icon: openmediavault
         href: http://192.168.1.101:9001/MediaServer
-        widget:
-          type: iframe
-          url: http://192.168.1.101:9001/MediaServer
-          height: 500 # Adjust this height to fit your screen
-
+    - AndroidGateway:
+        icon: openmediavault
+        href: http://192.168.1.101:9001/MediaServer
+    - LLMServerMini:
+        icon: openmediavault
+        href: http://192.168.1.101:9001/MediaServer
+    - LLMServerSmall:
+        icon: openmediavault
+        href: http://192.168.1.101:9001/MediaServer
+    - LLMServerMedium:
+        icon: openmediavault
+        href: http://192.168.1.101:9001/MediaServer
+    - LLMServerLarge:
+        icon: openmediavault
+        href: http://192.168.1.101:9001/MediaServer
