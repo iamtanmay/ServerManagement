@@ -44,6 +44,7 @@ pkg install imagemagick -y
 
 #Service
 mkdir $PREFIX/var/service/camera_powermeter
+rm -rf $PREFIX/var/service/camera_powermeter/run
 cat << 'EOF' >> $PREFIX/var/service/camera_powermeter/run
 #!/data/data/com.termux/files/usr/bin/bash
 
@@ -52,7 +53,7 @@ termux-wake-lock
 while true; do
 	timeout 5 termux-camera-photo -c 0 /data/data/com.termux/files/home/power_meter.jpg || true
 	if [ -f /data/data/com.termux/files/home/power_meter.jpg ]; then
-		convert /data/data/com.termux/files/home/power_meter.jpg -resize 640x -crop 180x180+280+270 /data/data/com.termux/files/home/power_meter2.jpg || true
+		convert /data/data/com.termux/files/home/power_meter.jpg -resize 640x  -rotate -6 -crop 360x360+120+180 /data/data/com.termux/files/home/power_meter2.jpg || true
 	fi
 	sleep 10
 done
@@ -60,6 +61,7 @@ EOF
 
 chmod +x $PREFIX/var/service/camera_powermeter/run
 sv-enable camera_powermeter
+sv restart camera_powermeter
 sv status camera_powermeter
 
 
