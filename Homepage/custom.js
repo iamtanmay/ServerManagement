@@ -115,7 +115,8 @@ function injectMyCustomFooter() {
     footerDiv.style.cssText = "text-align: center; margin: 20px auto; padding: 10px; width: 100%; max-width: 600px; position: relative; z-index: 9999; clear: both;";
 
     const meterImg = document.createElement("img");
-    meterImg.src = "http://192.168.1.101:9001/power_meter2.jpg";
+    const baseImgUrl = "http://192.168.1.101:9001/power_meter2.jpg";
+    meterImg.src = baseImgUrl;
     meterImg.alt = "Power Meter Status";
     meterImg.style.cssText = "display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
 
