@@ -118,7 +118,7 @@ function injectMyCustomFooter() {
     const baseImgUrl = "http://192.168.1.101:9001/power_meter2.jpg";
     meterImg.src = baseImgUrl;
     meterImg.alt = "Power Meter Status";
-    meterImg.style.cssText = "display: block; width: 120%; height: auto; position: absolute; left: 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
+    meterImg.style.cssText = "display: block; width: 60%; height: auto; align-self: flex-start; justify-self: start; margin-left: 0; margin-right: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
 
 
     const imgLink = document.createElement("a");
