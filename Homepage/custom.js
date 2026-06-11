@@ -108,53 +108,25 @@
   function injectMyCustomFooter() {
     if (document.getElementById("my-custom-homelab-footer")) return;
 
-    const layoutContainer = document.querySelector('main') || document.getElementById("layout") || document.body;
+    const layoutContainer = document.body;
     if (!layoutContainer) return;
 
     const footerDiv = document.createElement("div");
     footerDiv.id = "my-custom-homelab-footer";
-    footerDiv.style.cssText = `
-      text-align: center;
-      margin: 40px auto 20px auto;
-      padding: 20px;
-      border-top: 1px solid rgba(255,255,255,0.1);
-      width: 100%;
-      max-width: 600px;
-      clear: both;
-    `;
+    footerDiv.style.cssText = "text-align: center; margin: 40px auto 20px auto; padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%; max-width: 600px; position: relative; z-index: 9999; clear: both;";
 
-    // Fixed Link URL
     const fileLink = document.createElement("a");
     fileLink.href = "http://192.168.1.101:9001/";
     fileLink.target = "_blank";
     fileLink.textContent = "📂 Open File Server";
-    fileLink.style.cssText = `
-      display: inline-block;
-      margin-bottom: 20px;
-      padding: 8px 16px;
-      background: rgba(255,255,255,0.15);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: background 0.15s;
-    `;
+    fileLink.style.cssText = "display: inline-block; margin-bottom: 20px; padding: 8px 16px; background: rgba(255,255,255,0.15); color: #fff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; transition: background 0.15s;";
     fileLink.onmouseenter = () => (fileLink.style.background = "rgba(255,255,255,0.3)");
     fileLink.onmouseleave = () => (fileLink.style.background = "rgba(255,255,255,0.15)");
 
-    // Fixed Image URL
     const meterImg = document.createElement("img");
     meterImg.src = "http://192.168.1.101:9001/power_meter2.jpg";
     meterImg.alt = "Power Meter Status";
-    meterImg.style.cssText = `
-      display: block;
-      max-width: 100%;
-      height: auto;
-      margin: 0 auto;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    `;
+    meterImg.style.cssText = "display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
 
     footerDiv.appendChild(fileLink);
     footerDiv.appendChild(meterImg);
@@ -174,6 +146,13 @@
   const observer = new MutationObserver(injectAll);
   observer.observe(document.body, { childList: true, subtree: true });
   injectAll();
+
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    injectMyCustomFooter();
+  } else {
+    window.addEventListener("DOMContentLoaded", injectMyCustomFooter);
+  }
+
 })();
 
 
