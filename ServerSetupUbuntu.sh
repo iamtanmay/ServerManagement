@@ -44,6 +44,46 @@ source ~/.bashrc
 #Change to root user
 echo "$PASS" | sudo -S -s
 
+#Enable autologin
+#sudo nano /lib/systemd/system/getty@.service
+#ExecStart=-/sbin/agetty -o '-p -- \\u' --noclear --autologin llmserver %I $TERM
+
+#Enable automatic sudo
+#sudo visudo
+#Add at the bottom
+#llmserver ALL=(ALL) NOPASSWD: ALL
+
+#Enable keyring unlock on boot
+#nano ~/.bashprofile
+#if [ -n "$IS_TTY" ] || [ -z "$DISPLAY" ]; then
+#    echo -n "Unlocking Keyring... "
+#    echo -n "llmserver" | gnome-keyring-daemon --unlock
+#fi
+
+#WOWLAN Wake up on WLAN
+WLAN=$(ip -o link show | grep -o 'wl[^:]*' | head -n1)
+PHY_NAME=$(iw dev | grep -o 'phy#[0-9]*' | tr -d '#')
+MACADDR=$(ip link show $WLAN | grep -oP '(?<=link/ether )[:0-9a-fA-F]+')
+
+echo "Server has the Interface $WLAN $PHY_NAME with address $MACADDR"
+
+ethtool -s $WLAN wol g
+iw $PHY_NAME wowlan enable magic-packet
+nmcli connection modify 'Pradhan' wifi.wake-on-wlan magic
+iw $PHY_NAME wowlan show
+echo "If the previous message says WoWLAN is enabled with wake up on magic packet, then system is ready for Wakeup on WLAN"
+
+# Identify the original user (who called the script)
+ORIGINAL_USER=${SUDO_USER:-$USER}
+
+echo "Switching back to $ORIGINAL_USER..."
+
+# Dropping privileges for the final message or subsequent user-level tasks
+sudo -u "$ORIGINAL_USER" bash <<EOF
+    echo "Current user: \$(whoami)"
+    echo "Configuration complete. No longer running as root."
+EOF
+
 #Drivers
 #Factory reset the plug with 10 second long press
 #Install websocat on your system
@@ -254,27 +294,3 @@ udevadm trigger --subsystem-match=powercap
 systemctl daemon-reload
 systemctl enable power-monitor.service
 systemctl start power-monitor.service
-
-#Setup Wakeup on WLAN
-WLAN=$(ip -o link show | grep -o 'wl[^:]*' | head -n1)
-PHY_NAME=$(iw dev | grep -o 'phy#[0-9]*' | tr -d '#')
-MACADDR=$(ip link show $WLAN | grep -oP '(?<=link/ether )[:0-9a-fA-F]+')
-
-echo "Server has the Interface $WLAN $PHY_NAME with address $MACADDR"
-
-ethtool -s $WLAN wol g
-iw $PHY_NAME wowlan enable magic-packet
-nmcli connection modify 'Pradhan' wifi.wake-on-wlan magic
-iw $PHY_NAME wowlan show
-echo "If the previous message says WoWLAN is enabled with wake up on magic packet, then system is ready for Wakeup on WLAN"
-
-# Identify the original user (who called the script)
-ORIGINAL_USER=${SUDO_USER:-$USER}
-
-echo "Switching back to $ORIGINAL_USER..."
-
-# Dropping privileges for the final message or subsequent user-level tasks
-sudo -u "$ORIGINAL_USER" bash <<EOF
-    echo "Current user: \$(whoami)"
-    echo "Configuration complete. No longer running as root."
-EOF
