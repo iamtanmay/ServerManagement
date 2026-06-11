@@ -112,15 +112,13 @@
 
         const footerDiv = document.createElement("div");
         footerDiv.id = "my-custom-homelab-footer";
-        // CHANGED: Added display: flex and flex-direction: column to allow left alignment
         footerDiv.style.cssText = "display: flex; flex-direction: column; align-items: flex-start; margin: 20px 0; padding: 10px; width: 100%; position: relative; z-index: 9999; clear: both;";
 
         const meterImg = document.createElement("img");
         const baseImgUrl = "http://192.168.1.101:9001/power_meter2.jpg";
         meterImg.src = baseImgUrl;
         meterImg.alt = "Power Meter Status";
-        // CHANGED: Kept width at 60%, removed auto margins that force centering
-        meterImg.style.cssText = "display: block; width: 60%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
+        meterImg.style.cssText = "display: block; width: 120%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);";
 
         const imgLink = document.createElement("a");
         imgLink.href = "http://192.168.1.101:9001/power_meter.jpg";
