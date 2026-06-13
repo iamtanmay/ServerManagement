@@ -60,6 +60,36 @@ echo "$PASS" | sudo -S -s
 #    echo -n "llmserver" | gnome-keyring-daemon --unlock
 #fi
 
+
+#Wake up on LAN
+sudo apt update && sudo apt install ethtool -y
+#ETH_INT=$(ip -o link show to type ethernet | awk -F': ' '{print $2}' | head -n 1)
+
+ETH_INT=$(nmcli -g connection.interface-name connection show "Wired connection 1")
+
+# Check if an Ethernet interface was actually found
+if [ -z "$ETH_INT" ]; then
+    echo "Error: No Ethernet interface found!"
+    exit 1
+fi
+
+echo "Found Ethernet Interface: $ETH_INT"
+
+NM_CONN=$(nmcli -t -f NAME,DEVICE connection show --active | grep ":$ETH_INT$" | cut -d: -f1)
+
+if [ -n "$NM_CONN" ]; then
+    echo "Making WOL permanent for NetworkManager connection: $NM_CONN"
+    sudo nmcli connection modify "$NM_CONN" 802-3-ethernet.wake-on-lan magic
+else
+    echo "ERROR: Could not find a NetworkManager profile."
+fi
+
+echo "Wake-on-LAN configuration complete!"
+
+
+
+
+
 #WOWLAN Wake up on WLAN
 WLAN=$(ip -o link show | grep -o 'wl[^:]*' | head -n1)
 PHY_NAME=$(iw dev | grep -o 'phy#[0-9]*' | tr -d '#')
@@ -239,26 +269,60 @@ grep -qF '/opt/rocm/bin' ~/.bashrc || echo 'export PATH="$PATH:/opt/rocm/bin:/op
 #IntelHD
 
 #Vulkan
+#!/bin/bash
 sudo apt update
 sudo apt install vulkan-tools libvulkan-dev -y
 
-#SSH and VNC Server
-sudo apt install openssh-server tigervnc-standalone-server tigervnc-common -y
-mkdir -p ~/.vnc && echo 'localhost=no' > ~/.vnc/config
-echo -e "$PASS\n$PASS" | vncpasswd -f > ~/.vnc/passwd
-chmod 600 ~/.vnc/passwd
+# Install SSH and TigerVNC
+sudo apt install openssh-server tigervnc-standalone-server tigervnc-common dbus-x11 -y
 
-crontab -l 2>/dev/null | grep -v "vncserver :1" | crontab -
+# Create VNC Directory and Configuration
+mkdir -p ~/.vnc
+echo 'localhost=no' > ~/.vnc/config
 
-# Add a cron job to start the server at boot exactly how your connection script expects it
-(crontab -l 2>/dev/null; echo "@reboot rm -f /tmp/.X1-lock /tmp/.X11-unix/X1 ~/.vnc/*.pid ~/.vnc/*.log && /usr/bin/vncserver :1 -geometry 1280x720 -localhost no -xstartup /etc/X11/Xsession") | crontab -
+# CORRECT PASSWORD PIPELINE FOR TIGERVNC
+echo "$PASS" | vncpasswd -stdin
 
-# Run the server command immediately for the current uptime session
+# Create a clean Xstartup file instead of guessing environment paths
+cat << 'EOF' > ~/.vnc/xstartup
+#!/bin/sh
+unset SESSION_MANAGER
+unset DBUS_SESSION_BUS_ADDRESS
+exec /etc/X11/Xsession
+EOF
+chmod +x ~/.vnc/xstartup
+
+# Clean old crash locks
 rm -f /tmp/.X1-lock /tmp/.X11-unix/X1 ~/.vnc/*.pid ~/.vnc/*.log
-vncserver :1 -geometry 1280x720 -localhost no -xstartup /etc/X11/Xsession
 
+# CREATE SYSTEMD SERVICE (Replaces broken cron job)
+sudo tee /etc/systemd/system/vncserver@.service << EOF
+[Unit]
+Description=Remote desktop service (VNC)
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=$USER
+Group=$USER
+WorkingDirectory=%h
+ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+ExecStart=/usr/bin/vncserver :%i -geometry 1280x720 -localhost no
+ExecStop=/usr/bin/vncserver -kill :%i
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Reload and enable the service to start at boot automatically
+sudo systemctl daemon-reload
+sudo systemctl enable --now vncserver@1.service
+
+# Firewall Openings
 sudo ufw allow ssh
+sudo ufw allow 5901/tcp
 sudo systemctl enable --now ssh.socket
+
     
 # 1. Copy script to home and make it executable
 cp -f "./PowerMonUbuntu.sh" "$HOME/power_monitor.sh" && chmod +x "$HOME/power_monitor.sh"

@@ -12,7 +12,7 @@
 # Gateway server is designed to control the subnet with other servers inside
 
 # Load server configuration
-CONFIG_FILE="./servers.conf"
+CONFIG_FILE="./ServerManagement/servers.conf"
 
 #Get directory of this script
 CURRENT_DIR="$(dirname "$0")"
