@@ -99,12 +99,14 @@ connect_server_ssh() {
 		return 1
 	fi
 
+	
 	# Copy script to remote machine
 	sshpass -p "$PASS" scp $SSH_OPTS -P "$PORT" "$LOCAL_SCRIPT" "$USER@$IP:$REMOTE_TEMP" >/dev/null 2>&1
 
 	# Launch SSH terminal
 	gnome-terminal --tab --title="$TITLE" -- bash -c \
-	"sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"chmod +x $REMOTE_TEMP; $REMOTE_TEMP $PASS; rm -f $REMOTE_TEMP; bash\""
+	"echo '$PASS'; sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"chmod +x $REMOTE_TEMP; $REMOTE_TEMP $PASS; rm -f $REMOTE_TEMP; bash\""
+	sleep 10
 }
 
 send_ssh_command()
@@ -202,6 +204,9 @@ while [ "$ACTION" -ne 9 ]; do
 		# --- PROCESS ---
 		for s in "${SERVERS[@]}"; do
 			IFS="|" read -r ID TITLE IP PORT USER PASS CMDSTOP MAC <<< "$s"
+
+			CLEAN_VAR_NAME="${PASS#\$}"
+			PASS="${!CLEAN_VAR_NAME}"
 
 			if [[ "$SELECTION" != "back" ]]; then
 				if [[ " $SELECTION " =~ " $ID " ]] || [[ "$SELECTION" == "all" ]]; then        
