@@ -295,6 +295,7 @@ chmod +x ~/.vnc/xstartup
 # Clean old crash locks
 rm -f /tmp/.X1-lock /tmp/.X11-unix/X1 ~/.vnc/*.pid ~/.vnc/*.log
 
+rm -f /etc/systemd/system/vncserver@.service
 # CREATE SYSTEMD SERVICE (Replaces broken cron job)
 sudo tee /etc/systemd/system/vncserver@.service << EOF
 [Unit]
@@ -303,9 +304,9 @@ After=syslog.target network.target
 
 [Service]
 Type=forking
-User=$USER
-Group=$USER
-WorkingDirectory=%h
+User=llmserver
+Group=llmserver
+WorkingDirectory=/home/llmserver
 ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
 ExecStart=/usr/bin/vncserver :%i -geometry 1280x720 -localhost no
 ExecStop=/usr/bin/vncserver -kill :%i
@@ -317,10 +318,12 @@ EOF
 # Reload and enable the service to start at boot automatically
 sudo systemctl daemon-reload
 sudo systemctl enable --now vncserver@1.service
+sudo systemctl enable --now vncserver@2.service
 
 # Firewall Openings
 sudo ufw allow ssh
 sudo ufw allow 5901/tcp
+sudo ufw allow 5902/tcp
 sudo systemctl enable --now ssh.socket
 
     
@@ -358,3 +361,57 @@ udevadm trigger --subsystem-match=powercap
 systemctl daemon-reload
 systemctl enable power-monitor.service
 systemctl start power-monitor.service
+
+#Codex CLI
+sudo apt update
+sudo apt install -y bubblewrap nodejs npm
+
+sudo tee /etc/apparmor.d/local-codex << EOF
+abi <abi/4.0>,
+include <tunables/global>
+
+profile codex_sandbox /usr/bin/bwrap flags=(unconfined) {
+    userns,
+}
+EOF
+
+sudo systemctl reload apparmor
+sudo npm install -g @openai/codex
+
+mkdir -p ~/.codex
+
+#Global config
+rm -rf ~/.codex/config.toml
+cat << 'EOF' > ~/.codex/config.toml
+# Define the llama.cpp provider globally
+[model_providers.llamacpp]
+name = "llamacpp"
+base_url = "http://192.168.1.106:8081"
+api_key = "sk-local"
+wire_api = "responses"
+
+# Tell Codex which profile to load by default if no flag is passed
+profile = "local"
+EOF
+
+#Local config
+rm -rf ~/.codex/Qwen_36_35B_MTP.config.toml
+cat << 'EOF' > ~/.codex/Qwen_36_35B_MTP.config.toml
+model_provider = "llamacpp"
+model = "Qwen3.6-35B-A3B-UD-Q4_K_XL"
+context_length = 32752
+web_search = "live"
+EOF
+
+rm -rf ~/.codex/Qwen_36_27B_MTP.config.toml
+cat << 'EOF' > ~/.codex/Qwen_36_27B_MTP.config.toml
+model_provider = "llamacpp"
+model = "Qwen3.6-27B-MTP-UD-Q4_K_XL"
+context_length = 32752
+web_search = "live"
+EOF
+
+
+#Run codex
+#codex --profile local
+

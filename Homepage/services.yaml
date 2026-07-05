@@ -6,37 +6,37 @@
         ping: 192.168.1.200
     - LLMServerMini:
         icon: ollama
-        href: http://192.168.1.107:8081
+        href: http://192.168.1.104:8081
         ping: 192.168.1.104
     - LLMServerSmall:
         icon: ollama
-        href: http://192.168.1.104:8081
-        ping: 192.168.1.104
-    - LLMServerMedium:
-        icon: ollama
         href: http://192.168.1.105:8081
         ping: 192.168.1.105
-    - LLMServerLarge:
+    - LLMServerMedium:
         icon: ollama
         href: http://192.168.1.106:8081
         ping: 192.168.1.106
+    - LLMServerLarge:
+        icon: ollama
+        href: http://192.168.1.107:8081
+        ping: 192.168.1.107
 
 - File Servers:
     - MediaServer:
         icon: openmediavault
         href: http://192.168.1.101:9001/MediaServer
-    - AndroidGateway:
+    - AndroidGatewayFiles:
         icon: openmediavault
-        href: http://192.168.1.101:9001/MediaServer
-    - LLMServerMini:
+        href: http://192.168.1.101:9001/
+    - LLMServerMiniFiles:
         icon: openmediavault
-        href: http://192.168.1.107:9001/MediaServer
-    - LLMServerSmall:
+        href: http://192.168.1.104:9001/
+    - LLMServerSmallFiles:
         icon: openmediavault
-        href: http://192.168.1.104:9001/MediaServer
-    - LLMServerMedium:
+        href: http://192.168.1.105:9001/
+    - LLMServerMediumFiles:
         icon: openmediavault
-        href: http://192.168.1.105:9001/MediaServer
-    - LLMServerLarge:
+        href: http://192.168.1.106:9001/
+    - LLMServerLargeFiles:
         icon: openmediavault
-        href: http://192.168.1.106:9001/MediaServer
+        href: http://192.168.1.107:9001/
