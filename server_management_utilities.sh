@@ -76,7 +76,7 @@ get_status() {
 	echo "  $SMART_PLUG_STATUS"
 }
 
-# Suspend or PowerOff a server
+# Suspend or PowerOff a server (Termux/Background Safe)
 stop_server() {
 	local TITLE="$1"
 	local IP="$2"
@@ -85,9 +85,10 @@ stop_server() {
 	local PASS="$5"
 	local CMDSTOP="$6"
 
-	gnome-terminal --tab --title="$TITLE" -- bash -c \
-	"sshpass -p '$PASS' ssh -t $SSH_OPTS $USER@$IP -p $PORT \"echo '$PASS' | $CMDSTOP\""
+	# Execute the SSH command silently in the background without needing a Linux GUI
+	sshpass -p '$PASS' ssh $SSH_OPTS "$USER@$IP" -p "$PORT" "echo '$PASS' | $CMDSTOP" > /dev/null 2>&1 &
 }
+
 
 # Wakeup a server
 wake_server() {
