@@ -13,8 +13,6 @@ RUN apt-get update && apt-get install -y \
 # Install the OpenAI Codex CLI globally
 RUN npm install -g @openai/codex
 
-COPY ./codex-config/ /root/.codex/
-
 # Set up the workspace folder
 WORKDIR /workspace
 

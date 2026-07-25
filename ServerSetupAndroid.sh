@@ -20,6 +20,35 @@ cd ServerManagement
 git pull
 cd ..
 
+
+#git clone --recursive https://github.com/google/shaderc
+#cd shaderc
+#git submodule update --init --recursive
+#rm -rf build && mkdir build && cd build
+#cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DSHADERC_SKIP_TESTS=ON
+#ninja glslc
+
+
+#Llama.cpp
+pkg update && pkg upgrade -y
+pkg install vulkan-loader vulkan-headers vulkan-loader-android vulkan-tools ninja cmake clang python bison shaderc glslang spirv-headers -y
+cd ~
+git clone https://github.com/ggml-org/llama.cpp.git
+cd ~/llama.cpp
+rm -rf build
+
+nohup sh -c 'cmake -B build -G Ninja \
+  -DGGML_VULKAN=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DSPIRV-Headers_DIR=$PREFIX/share/cmake/SPIRV-Headers \
+  -DSPIRV-Tools_DIR=$PREFIX/lib/cmake/SPIRV-Tools \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DLLAMA_CURL=OFF' > config.log 2>&1 &
+
+nohup cmake --build build --config Release > compile.log 2>&1 &
+
+tail -f compile.log
+	
 #Image manipulation
 pkg install imagemagick -y
 
