@@ -1,35 +1,30 @@
-#Codex scripts
-yolocodex() {
-  # 1. Enforce that a path argument MUST be provided
+yolo_opencode() {
   if [ -z "$1" ]; then
     echo "❌ Error: You must explicitly provide a target folder path."
-    echo "👉 Usage: yolocodex ~/TestProject/"
+    echo "👉 Usage: yolo_opencode ~/TestProject/"
     return 1
   fi
 
-  # 2. Resolve the absolute path of the target directory
   local ABS_PATH
   ABS_PATH=$(cd "$1" 2>/dev/null && pwd)
 
-  # 3. Double-check that the specified directory exists
   if [ -z "$ABS_PATH" ]; then
     echo "❌ Error: The directory '$1' does not exist."
     return 1
   fi
 
-  # 4. Enforce that the TARGET directory is a Git repository
   if [ ! -d "$ABS_PATH/.git" ]; then
     echo "❌ Error: Target directory '$ABS_PATH' is not a Git repository!"
     echo "👉 Please run 'git init' inside that folder first to protect your data."
     return 1
   fi
 
-  echo "🛡️ Codex is strictly isolated inside Git repository: $ABS_PATH"
+  echo "🛡️ OpenCode is strictly isolated inside Git repository: $ABS_PATH"
 
-  # 5. Mount only the specified directory into the sandbox
   docker run -it --rm \
+    --add-host=host.docker.internal:host-gateway \
     -v "$ABS_PATH":/workspace \
-    -v ~/.codex:/root/.codex \
-    codex-cli:latest codex --profile profile --yolo
+    -v ~/.config/opencode:/root/.config/opencode \
+    -w /workspace \
+    opencode-cli:latest
 }
-
