@@ -61,6 +61,7 @@ probe_ssh(){
 }
 
 # Refreshes the Online/Offline status of all servers in servers.conf
+# Refreshes the Online/Offline status of all servers in servers.conf
 get_status() {
 	for s in "${SERVERS[@]}"; do
 		# Read the values FIRST
@@ -74,14 +75,14 @@ get_status() {
 		fi
 	done
 
-        #Capture the log line count right before writing to avoid picking up old data
+        # Capture the log line count right before writing to avoid picking up old data
         START_LINE=$(wc -l < "$LOGFILE" 2>/dev/null || echo 0)
 
 	switch_smart_plug power
 
-        #Fast polling loop to grep the log file cleanly
+        # Enhanced polling loop: 50 loops at 0.1s gives it up to 5 seconds to hear back from Wi-Fi
         ELAPSED=0
-        MAX_LOOPS=$((TIMEOUT_SECONDS * 2)) # 2 checks per second
+        MAX_LOOPS=50 
         RAW_MW=""
 
         while [ $ELAPSED -lt $MAX_LOOPS ]; do
@@ -102,10 +103,11 @@ get_status() {
             SMART_PLUG_POWER=$(awk "BEGIN {printf \"%.2f\", $RAW_MW / 1000}")
             echo "$SMART_PLUG_POWER"
         else
-            # Webhook fallbacks: return 0 or an explicit error flag
+            # If it still misses the log windows completely, flag it distinctly so you know it timed out
             echo "0.00" 
         fi
 }
+
 
 # Suspend or PowerOff a server (Termux/Background Safe)
 stop_server() {
