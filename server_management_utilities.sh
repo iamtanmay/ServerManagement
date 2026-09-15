@@ -39,7 +39,7 @@ fi
 CURRENT_DIR="$(dirname "$0")"
 CONFIG_FILE="${CURRENT_DIR}/servers.conf"
 SMART_PLUG_STATUS=""
-
+SMART_PLUG_POWER=""
 
 if [[ -f "$CONFIG_FILE" ]]; then
     source "$CONFIG_FILE"
@@ -73,7 +73,38 @@ get_status() {
 			echo "  [$ID] $TITLE [$IP] - OFFLINE"
 		fi
 	done
-	echo "  $SMART_PLUG_STATUS"
+
+        #Capture the log line count right before writing to avoid picking up old data
+        START_LINE=$(wc -l < "$LOGFILE" 2>/dev/null || echo 0)
+
+	switch_smart_plug power
+
+        #Fast polling loop to grep the log file cleanly
+        ELAPSED=0
+        MAX_LOOPS=$((TIMEOUT_SECONDS * 2)) # 2 checks per second
+        RAW_MW=""
+
+        while [ $ELAPSED -lt $MAX_LOOPS ]; do
+            # Only search lines appended after $START_LINE
+            RAW_MW=$(tail -n +$((START_LINE + 1)) "$LOGFILE" 2>/dev/null | grep -oP 'Attribute value for activePower 3/1/144/8:\s*\K\d+')
+            
+            # If we found the integer, break out immediately
+            if [[ -n "$RAW_MW" ]]; then
+                break
+            fi
+            
+            sleep 0.1
+            ELAPSED=$((ELAPSED + 1))
+        done
+
+	# Convert milliwatts integer to decimal Watts string (e.g., 312.39)
+        if [[ -n "$RAW_MW" ]]; then
+            SMART_PLUG_POWER=$(awk "BEGIN {printf \"%.2f\", $RAW_MW / 1000}")
+            echo "$SMART_PLUG_POWER"
+        else
+            # Webhook fallbacks: return 0 or an explicit error flag
+            echo "0.00" 
+        fi
 }
 
 # Suspend or PowerOff a server (Termux/Background Safe)
@@ -199,7 +230,8 @@ switch_smart_plug() {
 		"on")     "${script_dir}/switch_matter_smartplug.sh" 1 ;;
 		"off")    "${script_dir}/switch_matter_smartplug.sh" 0 ;;
 		"status") "${script_dir}/switch_matter_smartplug.sh" -1 ;;
-		*)        echo "Error: Invalid option '$switch'. Use on|off|status." >&2; return 1 ;;
+		"power") "${script_dir}/switch_matter_smartplug.sh" 2 ;;
+		*)        echo "Error: Invalid option '$switch'. Use on|off|status|power." >&2; return 1 ;;
 	esac
 }
 

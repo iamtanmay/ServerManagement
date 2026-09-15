@@ -1,0 +1,30 @@
+yolo_opencode() {
+  if [ -z "$1" ]; then
+    echo "❌ Error: You must explicitly provide a target folder path."
+    echo "👉 Usage: yolo_opencode ~/TestProject/"
+    return 1
+  fi
+
+  local ABS_PATH
+  ABS_PATH=$(cd "$1" 2>/dev/null && pwd)
+
+  if [ -z "$ABS_PATH" ]; then
+    echo "❌ Error: The directory '$1' does not exist."
+    return 1
+  fi
+
+  if [ ! -d "$ABS_PATH/.git" ]; then
+    echo "❌ Error: Target directory '$ABS_PATH' is not a Git repository!"
+    echo "👉 Please run 'git init' inside that folder first to protect your data."
+    return 1
+  fi
+
+  echo "🛡️ OpenCode is strictly isolated inside Git repository: $ABS_PATH"
+
+  docker run -it --rm \
+    --add-host=host.docker.internal:host-gateway \
+    -v "$ABS_PATH":/workspace \
+    -v ~/.config/opencode:/root/.config/opencode \
+    -w /workspace \
+    opencode-cli:latest
+}

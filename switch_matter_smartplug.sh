@@ -24,4 +24,8 @@ if [[ -f "$HOME/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js" ]]; th
 	if [[ "$1" == "1" ]]; then
 	    echo "commands onoff on 3 1" > "$PIPE"
 	fi
+
+	if [[ "$1" == "2" ]]; then
+		echo "attributes electricalpowermeasurement read 0x8 3 1" > "$PIPE"
+	fi
 fi

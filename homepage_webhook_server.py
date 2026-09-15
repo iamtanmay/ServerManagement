@@ -97,12 +97,26 @@ def run_action(action: str, server_id: int):
         success = result.returncode == 0
         output = (result.stdout + result.stderr).strip()
         logging.info("[id=%d] %s -> rc=%d", server_id, action, result.returncode)
+
+        # --- EXTRACT POWER IF CALLING STATUS ACTION ---
+        power_val = "0.00"
+        if action == "status" and success and output:
+            lines = output.splitlines()
+            if lines:
+                last_line = lines[-1].strip()
+                # Verify that the last line matches a decimal layout (e.g., 312.39)
+                if any(c.isdigit() for c in last_line) and "." in last_line:
+                    power_val = last_line
+                    # Optional: Remove the raw decimal string from the main server log output blocks
+                    output = "\n".join(lines[:-1]).strip()
+
         return jsonify({
             "server_id": server_id,
             "action": action,
             "success": success,
             "returncode": result.returncode,
             "output": output or ("OK" if success else "No output"),
+            "power": power_val  # Transmit the parsed wattage cleanly
         })
     except subprocess.TimeoutExpired:
         return jsonify({"server_id": server_id, "action": action, "success": False,
@@ -114,6 +128,7 @@ def run_action(action: str, server_id: int):
         logging.exception("Unexpected error")
         return jsonify({"server_id": server_id, "action": action, "success": False,
                         "returncode": -1, "output": str(e)}), 500
+
 
 
 # --- FORCE BROWSER TO ALWAYS FETCH FRESH FILE LISTS ---
