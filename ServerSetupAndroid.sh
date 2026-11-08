@@ -2,11 +2,12 @@
 #Disable MAC randomization in Developer settings
 #Check router if the correct MAC has the correct IP reserved
 
-pkg update && pkg upgrade -y
-TERMUX_USER=$(whoami)
-
 #Termux
 termux-setup-storage
+pkg update && pkg upgrade -y
+TERMUX_USER=$(whoami)
+pkg install bc -y
+pkg install termux-services -y
 pkg install termux-api -y
 pkg install termux-boot -y
 mkdir -p ~/.termux/boot
@@ -15,6 +16,9 @@ mkdir -p ~/.termux/boot
 pkg install openssh -y
 printf "#!/data/data/com.termux/files/usr/bin/sh\ntermux-wake-lock\nsshd" > ~/.termux/boot/start-ssh.sh
 chmod +x ~/.termux/boot/start-ssh.sh
+#set the sshd to keep the connection alive every 60 seconds and retry 10 times in case it doesn't work
+sed -i -e 's/#\?ClientAliveInterval.*/ClientAliveInterval 60/' -e 's/#\?ClientAliveCountMax.*/ClientAliveCountMax 10/' $PREFIX/etc/ssh/sshd_config
+
 pkg install tur-repo -y
 pkg update
 
@@ -263,7 +267,7 @@ alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
 
 
 #Service
-pkg update && pkg install termux-services -y
+pkg update
 
 mkdir -p $PREFIX/var/service/matter-shell/
 
@@ -301,6 +305,21 @@ source ~/.bashrc
 
 #Gitea
 pkg install gitea git -y
+mkdir -p $PREFIX/var/service/gitea
+nano $PREFIX/var/service/gitea/run
+
+cat << 'EOF' > $PREFIX/var/service/gitea/run
+#!/data/data/com.termux/files/usr/bin/sh
+# Redirect stderr to stdout so runit logs everything together
+exec 2>&1
+
+# Execute gitea. (Adjust the path if your gitea binary is located elsewhere)
+exec gitea web
+EOF
+
+chmod +x $PREFIX/var/service/gitea/run
+sv-enable gitea
+	
 
 #Tailscale
 curl -fsSL https://raw.githubusercontent.com/bropines/tailscale-termux-cli/main/remote-install.sh | bash
