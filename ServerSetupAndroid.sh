@@ -1,3 +1,10 @@
+#Go to your Android phone settings -> Network & Internet -> Private DNS. Switch it to Off, toggle your Wi-Fi off and on
+#Disable MAC randomization in Developer settings
+#Check router if the correct MAC has the correct IP reserved
+
+pkg update && pkg upgrade -y
+TERMUX_USER=$(whoami)
+
 #Termux
 termux-setup-storage
 pkg install termux-api -y
@@ -11,8 +18,79 @@ chmod +x ~/.termux/boot/start-ssh.sh
 pkg install tur-repo -y
 pkg update
 
+
+# Autostart SSH
+cat << 'EOF' > ~/.termux/boot/start-ssh.sh
+#!/data/data/com.termux/files/usr/bin/bash
+pkill -9 sshd
+sshd
+EOF
+
+chmod +x ~/.termux/boot/start-ssh.sh
+
+
 #Git
 pkg install git -y
+
+#SMB File server
+pkg install samba nano -y
+
+mkdir -p "$PREFIX/etc/samba"
+mkdir -p "$PREFIX/var/lib/samba/private"
+mkdir -p "$PREFIX/private"
+
+rm -rf "$PREFIX/etc/samba/smbusers"
+rm -rf $PREFIX/etc/samba/smb.passwd
+
+touch $PREFIX/etc/samba/smb.passwd
+
+rm -rf $PREFIX/etc/samba/smb.conf
+
+cat << 'EOF' > "$PREFIX/etc/samba/smb.conf"
+[global]
+    workgroup = WORKGROUP
+    server string = Termux Media Server
+    security = user
+    map to guest = Bad User
+    smb ports = 8445
+    interfaces = 127.0.0.1 192.168.1.102 0.0.0.0
+    bind interfaces only = no
+    smbd:background = no
+
+    # Force the server to accept older connection protocols used by VLC
+    server min protocol = NT1
+    lanman auth = yes
+    ntlm auth = yes
+
+[media]
+    path = /data/data/com.termux/files/home/media
+    browseable = yes
+    writable = yes
+    guest ok = yes
+    public = yes
+    force user = root
+EOF
+
+pkill smbd
+smbd -D -s $PREFIX/etc/samba/smb.conf
+pgrep -a smbd
+
+# Autostart Media server
+mkdir -p ~/.termux/boot
+
+cat << 'EOF' > ~/.termux/boot/start-samba.sh
+#!/Idata/data/com.termux/files/usr/bin/bash
+termux-wake-lock
+pkill -9 smbd
+smbd -D -s /data/data/com.termux/files/usr/etc/samba/smb.conf
+EOF
+
+chmod +x ~/.termux/boot/start-samba.sh
+
+
+#Websocat
+pkg install websocat -y
+websocat --version
 
 #ServerManagement
 git clone https://github.com/iamtanmay/ServerManagement.git
@@ -20,14 +98,217 @@ cd ServerManagement
 git pull
 cd ..
 
+#Homepage (Homelab dashboard)
+pkg install nodejs-lts -y
+git clone https://github.com/gethomepage/homepage.git
+cd homepage
+npm install -g pnpm
+pnpm install
+pnpm run build
+cd ..
 
-#git clone --recursive https://github.com/google/shaderc
-#cd shaderc
-#git submodule update --init --recursive
-#rm -rf build && mkdir build && cd build
-#cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DSHADERC_SKIP_TESTS=ON
-#ninja glslc
+cp $HOME/ServerManagement/Homepage/* $HOME/homepage/config/
 
+#Create service
+mkdir -p $PREFIX/var/service/homepage/log
+mkdir -p /data/data/com.termux/files/home/homepage/logs
+
+cat << 'EOF' >> $PREFIX/var/service/homepage/run
+#!/data/data/com.termux/files/usr/bin/sh
+exec 2>&1
+termux-wake-lock
+
+# Hardcode environment variables into the daemon environment
+export PATH=/data/data/com.termux/files/usr/bin:$PATH
+export HOSTNAME=0.0.0.0
+export HOMEPAGE_CONFIG_DIR=/data/data/com.termux/files/home/homepage/config
+export HOMEPAGE_ALLOWED_HOSTS="*"
+export NODE_ENV=production
+
+exec node /data/data/com.termux/files/home/homepage/.next/standalone/server.js
+EOF
+
+# Logger
+cat << 'EOF' >> $PREFIX/var/service/homepage/log/run
+#!/data/data/com.termux/files/usr/bin/sh
+
+exec svlogd -tt /data/data/com.termux/files/home/homepage/logs
+EOF
+
+chmod +x $PREFIX/var/service/homepage/run
+chmod +x $PREFIX/var/service/homepage/log/run
+sv stop homepage
+sv-disable homepage
+sv-enable homepage
+sv start homepage
+sv restart homepage
+
+#Homepage Webhook service
+pkg install python-pip -y
+pip install flask flask-cors --break-system-packages
+mkdir -p $PREFIX/var/service/homepage_webhook/log
+
+cat << 'EOF' > $PREFIX/var/service/homepage_webhook/run
+#!/data/data/com.termux/files/usr/bin/sh
+exec 2>&1
+termux-wake-lock
+
+exec python3 /data/data/com.termux/files/home/ServerManagement/homepage_webhook_server.py
+EOF
+
+chmod +x $PREFIX/var/service/homepage_webhook/run
+source $PREFIX/etc/profile.d/start-services.sh
+
+pkill -f "runsv"
+pkill -f "runsvdir"
+pkill -f "svlogd"
+rm -f ~/../usr/var/service/homepage_webhook/supervise/lock
+rm -f ~/../usr/var/service/homepage_webhook/log/supervise/lock
+mkdir -p ~/../usr/var/service/homepage_webhook/log/main
+
+chmod +x ~/../usr/var/service/homepage_webhook/run ~/../usr/var/service/homepage_webhook/log/run
+runsvdir ~/../usr/var/service &
+sleep 2
+sv stop homepage_webhook
+sv-disable homepage_webhook
+sv-enable homepage_webhook
+sv start homepage_webhook
+
+#Logger
+cat << 'EOF' > $PREFIX/var/service/homepage_webhook/log/run
+#!/data/data/com.termux/files/usr/bin/sh
+exec svlogd -tt ./main
+EOF
+
+chmod +x $PREFIX/var/service/homepage_webhook/log/run
+mkdir -p $PREFIX/var/service/homepage_webhook/log/main
+sv restart homepage_webhook
+
+
+
+
+
+
+
+
+#NodeJS matter controller setup
+mkdir /data/data/com.termux/files/home/matter && cd /data/data/com.termux/files/home/matter
+pkg update && pkg upgrade
+pkg install nodejs-lts tmux -y
+npm i @matter/nodejs-shell
+cd ~/
+
+#Give permissions to Termux to discover Network
+#Install ADB on PC. Your phone should be connected via USB and have Developer settings -> USB Debugging set to allow
+#sudo apt update && sudo apt install android-tools-adb android-tools-fastboot -y && adb devices
+#Your phone will show a popup, click allow. Run the command again
+#adb devices
+#adb -s ZY22GVS867 shell "pm grant com.termux android.permission.ACCESS_FINE_LOCATION; device_config put activity_manager max_phantom_processes 2147483647"
+#Sanity test if Termux can discover the network
+pkg install mdns-scan
+mdns-scan
+
+alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
+matter
+
+#Your router should be set up to give this device a static IP address
+#On Desktop start the matter server which is already paired with the matter device
+#Send this commission window request and copy the 8 digit PIN from the docker logs
+#echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
+#echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node_id": 9}}' | websocat --exit-on-eof ws://localhost:5580/ws
+#Sanity check - shows devices which are in commission window
+discover commissionable
+
+config wifi-credentials set Pradhan <your_wifi_password>
+
+#Hard Reset the Tapo P110M
+#1. Press and hold the power button on the side of the plug for 10 seconds.
+#2. Release the button when the LED starts blinking rapidly amber and green.
+#3. Note: If the plug drops off your Wi-Fi network completely during this reset, use the Tapo app or your phone's Wi-Fi settings to connect it back to your local 2.4GHz Wi-Fi network before proceeding.
+#matter> discover passcode 1041-944-1567
+#4. Pair the plug and assign it a local Node ID (e.g., Node 1)
+#matter> pair code 3 1041-944-1567
+
+#Get the -D value, the discriminator and use the PIN from the docker logs
+commission pair 3 --setupPinCode 66163303 --discriminator 3307
+config logfile set /data/data/com.termux/files/home/matter/matter_events.log
+
+#Restart the shell with tmux for detached persistent logging
+exit
+
+tmux
+matter
+config loglevel set "info"
+nodes log 3
+
+#Ctrl + B, then tap D to detach
+
+#Log management
+#Log
+cat ~/matter/matter_events.log | grep INFO
+#Tail
+tail -f -n 10 ~/matter/matter_events.log | grep --line-buffered INFO
+#Clearing logs
+truncate -s 0 ~/matter/matter_events.log
+
+#Commands
+#Format is 'commands onoff on <NodeId> 1'
+commands onoff off 3 1
+##To DELETE all configuration from the Matter controller - rm -rf /data/data/com.termux/files/home/.matter/shell-0
+
+#Scripting command to turn the plug on/off
+alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
+{ echo "commands onoff on 3 1"; sleep 15; } | matter
+{ echo "commands onoff off 3 1"; sleep 15; } | matter
+
+
+#Service
+pkg update && pkg install termux-services -y
+
+mkdir -p $PREFIX/var/service/matter-shell/
+
+cat << 'EOF' > $PREFIX/var/service/matter-shell/run
+#!/data/data/com.termux/files/usr/bin/bash
+
+# Ensure the named pipe exists
+if [ ! -p "$HOME/matter_pipe" ]; then
+    mkfifo "$HOME/matter_pipe"
+fi
+
+# Run a clean background stream wrapper
+tail -f "$HOME/matter_pipe" | node "$HOME/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js" > /dev/null 2>&1
+EOF
+
+chmod +x $PREFIX/var/service/matter-shell/run
+source $PREFIX/etc/profile.d/start-services.sh
+pkill -f "runsv"
+sv-enable matter-shell
+sv down matter-shell
+sv up matter-shell
+sv status matter-shell
+
+#Add aliases to .bashrc
+cat << 'EOF' >> ~/.bashrc
+
+alias matter-on='echo "commands onoff on 3 1" > ~/matter_pipe'
+alias matter-off='echo "commands onoff off 3 1" > ~/matter_pipe'
+alias matter-status='sv status matter-shell'
+alias matter-restart='sv restart matter-shell'
+EOF
+
+source ~/.bashrc
+
+
+#Gitea
+pkg install gitea git -y
+
+#Tailscale
+curl -fsSL https://raw.githubusercontent.com/bropines/tailscale-termux-cli/main/remote-install.sh | bash
+tailscale up
+
+#Obsidian
+
+#HermesUI
 
 #Llama.cpp
 pkg update && pkg upgrade -y
@@ -95,111 +376,11 @@ sv status camera_powermeter
 
 
 
-#Websocat
-wget https://github.com/vi/websocat/releases/download/v4.0.0-alpha3/websocat.aarch64-linux-android
-chmod +x websocat*
-mv websocat* $PREFIX/bin/websocat
-websocat --version
-
-#Homepage (Homelab dashboard)
-pkg install nodejs-lts -y
-git clone https://github.com/gethomepage/homepage.git
-cd homepage
-npm install -g pnpm
-pnpm install
-pnpm run build
-cd ..
-
-cp $HOME/ServerManagement/services.yaml $HOME/homepage/config/
-cp $HOME/ServerManagement/widgets.yaml $HOME/homepage/config/
-cp $HOME/ServerManagement/power_server.sh $HOME/homepage/config/
-cp $HOME/ServerManagement/server_stats.sh $HOME/homepage/config/
-
-#Create service
-mkdir -p $PREFIX/var/service/homepage/log
-mkdir -p /data/data/com.termux/files/home/homepage/logs
-
-cat << 'EOF' >> $PREFIX/var/service/homepage/run
-#!/data/data/com.termux/files/usr/bin/sh
-exec 2>&1
-termux-wake-lock
-
-# Hardcode environment variables into the daemon environment
-export PATH=/data/data/com.termux/files/usr/bin:$PATH
-export HOSTNAME=0.0.0.0
-export HOMEPAGE_CONFIG_DIR=/data/data/com.termux/files/home/homepage/config
-export HOMEPAGE_ALLOWED_HOSTS="*"
-export NODE_ENV=production
-
-exec node /data/data/com.termux/files/home/homepage/.next/standalone/server.js
-EOF
-
-# Logger
-cat << 'EOF' >> $PREFIX/var/service/homepage/log/run
-#!/data/data/com.termux/files/usr/bin/sh
-
-exec svlogd -tt /data/data/com.termux/files/home/homepage/logs
-EOF
-
-chmod +x $PREFIX/var/service/homepage/run
-chmod +x $PREFIX/var/service/homepage/log/run
-sv stop homepage
-sv-disable homepage
-sv-enable homepage
-sv start homepage
-sv restart homepage
-
-#Homepage Webhook service
-pip install flask flask-cors --break-system-packages
-mkdir -p $PREFIX/var/service/homepage_webhook/log
-
-cat << 'EOF' > $PREFIX/var/service/homepage_webhook/run
-#!/data/data/com.termux/files/usr/bin/sh
-exec 2>&1
-termux-wake-lock
-
-exec python3 /data/data/com.termux/files/home/ServerManagement/homepage_webhook_server.py
-EOF
-
-chmod +x $PREFIX/var/service/homepage_webhook/run
-source $PREFIX/etc/profile.d/start-services.sh
-pkill -f "runsv"
-sv stop homepage_webhook
-sv-disable homepage_webhook
-sv-enable homepage_webhook
-sv start homepage_webhook
-
-#Logger
-cat << 'EOF' > $PREFIX/var/service/homepage_webhook/log/run
-#!/data/data/com.termux/files/usr/bin/sh
-exec svlogd -tt ./main
-EOF
-
-chmod +x $PREFIX/var/service/homepage_webhook/log/run
-mkdir -p $PREFIX/var/service/homepage_webhook/log/main
-sv restart homepage_webhook
 
 
 
-#uDocker
-pkg install udocker -y
-mkdir -p /data/data/com.termux/files/home/matter-data
-udocker pull ghcr.io/matter-js/python-matter-server:8.1.2
-udocker create --name=matter-server ghcr.io/matter-js/python-matter-server:8.1.2
-udocker setup --execmode=P1 matter-server
 
-#Matter server (doesn't work)
-udocker run \
-  --user=root \
-  -v /data/data/com.termux/files/home/matter-data:/data \
-  matter-server \
-  --storage-path /data \
-  --paa-root-cert-dir /data/credentials \
-  --bluetooth-adapter 999 \
-  --disable-server-interactions
 
-#Exec
-udocker run -i -t --user=root --entrypoint=/bin/sh matter-server
 
 #Proot
 pkg install proot-distro -y
@@ -249,7 +430,7 @@ node_exporter &
 curl localhost:9100/metrics
 
 
-#Gitea
+
 
 
 #NGINX
@@ -297,7 +478,6 @@ http {
 }
 
 
-#Tailscale
 
 #100.115.26.71
 #100.76.255.48
@@ -377,100 +557,7 @@ if __name__ == '__main__':
 
 
 
-#NodeJS matter controller setup
-mkdir /data/data/com.termux/files/home/matter && cd /data/data/com.termux/files/home/
-pkg update && pkg upgrade
-pkg install nodejs-lts tmux -y
-npm i @matter/nodejs-shell
 
-#Give permissions to Termux to discover Network
-#Install ADB on PC. Your phone should be connected via USB and have Developer settings -> USB Debugging set to allow
-#sudo apt update && sudo apt install android-tools-adb android-tools-fastboot -y && adb devices
-#Your phone will show a popup, click allow. Run the command again
-#adb devices
-#adb -s ZY22GVS867 shell "pm grant com.termux android.permission.ACCESS_FINE_LOCATION; device_config put activity_manager max_phantom_processes 2147483647"
-#Sanity test if Termux can discover the network
-pkg install mdns-scan
-mdns-scan
-
-alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
-matter
-
-#Your router should be set up to give this device a static IP address
-#On Desktop start the matter server which is already paired with the matter device
-#Send this commission window request and copy the 8 digit PIN from the docker logs
-#echo '{"message_id": "2", "command": "set_wifi_credentials", "args": {"ssid": "Pradhan", "credentials": "xxxxxx"}}' | websocat ws://localhost:5580/ws
-#echo '{"message_id": "1", "command": "open_commissioning_window", "args": {"node_id": 9}}' | websocat --exit-on-eof ws://localhost:5580/ws
-#Sanity check - shows devices which are in commission window
-discover commissionable
-#Get the -D value, the discriminator and use the PIN from the docker logs
-commission pair 3 --setupPinCode 66163303 --discriminator 3307
-config logfile set /data/data/com.termux/files/home/matter/matter_events.log
-
-#Restart the shell with tmux for detached persistent logging
-exit
-
-tmux
-matter
-config loglevel set "info"
-nodes log 3
-
-#Ctrl + B, then tap D to detach
-
-#Log management
-#Log
-cat ~/matter/matter_events.log | grep INFO
-#Tail
-tail -f -n 10 ~/matter/matter_events.log | grep --line-buffered INFO
-#Clearing logs
-truncate -s 0 ~/matter/matter_events.log
-
-#Commands
-#Format is 'commands onoff on <NodeId> 1'
-commands onoff off 3 1
-##To DELETE all configuration from the Matter controller - rm -rf /data/data/com.termux/files/home/.matter/shell-0
-
-#Scripting command to turn the plug on/off
-alias matter='(node ~/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js)'
-{ echo "commands onoff on 3 1"; sleep 15; } | matter
-{ echo "commands onoff off 3 1"; sleep 15; } | matter
-
-
-#Service
-pkg update && pkg install termux-services -y
-
-mkdir -p $PREFIX/var/service/matter-shell/
-
-cat << 'EOF' > $PREFIX/var/service/matter-shell/run
-#!/data/data/com.termux/files/usr/bin/bash
-
-# Ensure the named pipe exists
-if [ ! -p "$HOME/matter_pipe" ]; then
-    mkfifo "$HOME/matter_pipe"
-fi
-
-# Run a clean background stream wrapper
-tail -f "$HOME/matter_pipe" | node "$HOME/matter/node_modules/@matter/nodejs-shell/dist/esm/app.js" > /dev/null 2>&1
-EOF
-
-chmod +x $PREFIX/var/service/matter-shell/run
-source $PREFIX/etc/profile.d/start-services.sh
-pkill -f "runsv"
-sv-enable matter-shell
-sv down matter-shell
-sv up matter-shell
-sv status matter-shell
-
-#Add aliases to .bashrc
-cat << 'EOF' >> ~/.bashrc
-
-alias matter-on='echo "commands onoff on 3 1" > ~/matter_pipe'
-alias matter-off='echo "commands onoff off 3 1" > ~/matter_pipe'
-alias matter-status='sv status matter-shell'
-alias matter-restart='sv restart matter-shell'
-EOF
-
-source ~/.bashrc
 
 
 
