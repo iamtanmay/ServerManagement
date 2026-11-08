@@ -72,7 +72,7 @@ while true; do
 	total_w="0.0000"
 	fi
 
-	avg_w=$(echo "scale=4; ($voltage_mv / 1000) * ${current_avg:-0} / -1000" | bc -l)
+	avg_w=$(echo "scale=4; ($voltage_mv / 1000) * ${current_avg:-0} / -1000000" | bc -l)
 
 	clear
 	echo "------------Android Gateway------------"
@@ -87,7 +87,7 @@ while true; do
 	echo "------------Services-------------------"
 	printf "%-15s %-14s %-11s %s\n" "Service" "PID" "Status" "Uptime"
 
-	# 1. SSH (Using the fixed, native ps/awk pipeline)
+	# 1. SSH
 	ps -eo pid,etime,cmd | awk '/[r]unsv sshd/ { 
 		pid = $1; split($2, t, /[-:]/); len = 0; for (i in t) len++; sec = 0; 
 		if (len == 4) { sec = (t[1]*86400) + (t[2]*3600) + (t[3]*60) + t[4] } 
@@ -97,13 +97,13 @@ while true; do
 	}' | {
 		read -r line
 		if [ -n "$line" ]; then
-			echo "$line" | convert_time_format | awk '{printf "%-15s %-14s %-11s %s\n", "SSH", $3, toupper($1), $5}'
+			echo "$line" | convert_time_format | awk '{gsub(/[(),:]/, "", $4); printf "%-15s %-14s %-11s %s\n", "SSH", $4, toupper($1), $3}'
 		else
 			printf "%-15s %-14s %-11s %s\n" "SSH" "--" "DOWN" "--"
 		fi
 	}
 
-	# 2. Matter (Using the fixed, native ps/awk pipeline)
+	# 2. Matter
 	ps -eo pid,etime,cmd | awk '/[n]ode.*matter/ { 
 		pid = $1; split($2, t, /[-:]/); len = 0; for (i in t) len++; sec = 0; 
 		if (len == 4) { sec = (t[1]*86400) + (t[2]*3600) + (t[3]*60) + t[4] } 
@@ -113,41 +113,40 @@ while true; do
 	}' | {
 		read -r line
 		if [ -n "$line" ]; then
-			echo "$line" | convert_time_format | awk '{printf "%-15s %-14s %-11s %s\n", "Matter", $3, toupper($1), $5}'
+			echo "$line" | convert_time_format | awk '{gsub(/[(),:]/, "", $4); printf "%-15s %-14s %-11s %s\n", "Matter", $4, toupper($1), $3}'
 		else
 			printf "%-15s %-14s %-11s %s\n" "Matter" "--" "DOWN" "--"
 		fi
 	}
 
-	# 3. Homepage (sv manager)
+	# 3. Homepage
 	sv -w 1 status homepage | {
 		read -r line
 		if echo "$line" | grep -q "^run:"; then
-			echo "$line" | convert_time_format | awk '{printf "%-15s %-14s %-11s %s\n", "Homepage", $3, toupper($1), $5}'
+			echo "$line" | convert_time_format | awk '{gsub(/[(),:]/, "", $4); printf "%-15s %-14s %-11s %s\n", "Homepage", $4, toupper($1), $3}'
 		else
 			printf "%-15s %-14s %-11s %s\n" "Homepage" "--" "DOWN" "--"
 		fi
 	}
 
-	# 4. Gitea (sv manager)
+	# 4. Gitea
 	sv -w 1 status gitea | {
 		read -r line
 		if echo "$line" | grep -q "^run:"; then
-			echo "$line" | convert_time_format | awk '{printf "%-15s %-14s %-11s %s\n", "Gitea", $3, toupper($1), $5}'
+			echo "$line" | convert_time_format | awk '{gsub(/[(),:]/, "", $4); printf "%-15s %-14s %-11s %s\n", "Gitea", $4, toupper($1), $3}'
 		else
 			printf "%-15s %-14s %-11s %s\n" "Gitea" "--" "DOWN" "--"
 		fi
 	}
 
-	# 5. NGINX (Placeholder fallback)
+	# 5. NGINX
 	printf "%-15s %-14s %-11s %s\n" "NGINX" "--" "DOWN" "--"
 
-	# 6. Prometheus (Placeholder fallback)
+	# 6. Prometheus
 	printf "%-15s %-14s %-11s %s\n" "Prometheus" "--" "DOWN" "--"
 
 	echo "----------------------------"
 	echo "Press Ctrl+C to drop to Shell"
-
 	sleep 1
 done
 bash

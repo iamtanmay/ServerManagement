@@ -306,7 +306,6 @@ source ~/.bashrc
 #Gitea
 pkg install gitea git -y
 mkdir -p $PREFIX/var/service/gitea
-nano $PREFIX/var/service/gitea/run
 
 cat << 'EOF' > $PREFIX/var/service/gitea/run
 #!/data/data/com.termux/files/usr/bin/sh
