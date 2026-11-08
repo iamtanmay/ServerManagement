@@ -86,6 +86,10 @@ while true; do
 	printf "Current Power:   %.4f W\n" "$total_w"
 	echo "------------Services-------------------"
 	echo "Service         PID            Status      Uptime"
+
+	printf "SSH          "
+	ps -eo pid,etime,cmd | awk '/[r]unsv sshd/ { pid = $1; split($2, t, /[-:]/); len = 0; for (i in t) len++; sec = 0; if (len == 4) { sec = (t[1]*86400) + (t[2]*3600) + (t[3]*60) + t[4] } else if (len == 3) { sec = (t[1]*3600) + (t[2]*60) + t[3] } else if (len == 2) { sec = (t[1]*60) + t[2] } print "run: matter-shell: (pid " pid ") " sec "s"}' | convert_time_format
+
 	printf "Matter          "
 	ps -eo pid,etime,cmd | awk '/[n]ode.*matter/ { pid = $1; split($2, t, /[-:]/); len = 0; for (i in t) len++; sec = 0; if (len == 4) { sec = (t[1]*86400) + (t[2]*3600) + (t[3]*60) + t[4] } else if (len == 3) { sec = (t[1]*3600) + (t[2]*60) + t[3] } else if (len == 2) { sec = (t[1]*60) + t[2] } print "run: matter-shell: (pid " pid ") " sec "s"}' | convert_time_format
 
